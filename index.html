@@ -581,7 +581,7 @@
             return `${day}/${month}/${year}`;
         }
 
-        // Função para gerar Excel com categorias agrupadas e cores
+        // Função para gerar Excel com layout IDÊNTICO à imagem (bordas, centralizado)
         function generateStyledExcel(inputs, selectedData) {
             // Criar workbook
             const wb = XLSX.utils.book_new();
@@ -673,8 +673,76 @@
             // MESCLAR CÉLULAS PARA TÍTULOS
             ws['!merges'] = [
                 { s: { r: 0, c: 0 }, e: { r: 0, c: 4 } }, // Título principal
-                { s: { r: 2, c: 0 }, e: { r: 2, c: 4 } }, // Título INFORMAÇÕES
+                { s: { r: 2, c: 0 }, e: { r: 2, c: 4 } }, // Título INFORMAÇÕES DA UNIDADE
             ];
+            
+            // APLICAR FORMATAÇÃO COM BORDAS E CENTRALIZAÇÃO
+            // Definir o intervalo de células que terão bordas
+            const range = XLSX.utils.decode_range(ws['!ref']);
+            
+            // Inicializar objeto de estilos se não existir
+            if (!ws['!cells']) ws['!cells'] = {};
+            
+            // Aplicar bordas e alinhamento a todas as células
+            for (let R = range.s.r; R <= range.e.r; R++) {
+                for (let C = range.s.c; C <= range.e.c; C++) {
+                    const cellRef = XLSX.utils.encode_cell({ r: R, c: C });
+                    
+                    // Se a célula não existe, criar vazia
+                    if (!ws[cellRef]) {
+                        ws[cellRef] = { t: 's', v: '' };
+                    }
+                    
+                    // Inicializar objeto de estilo
+                    if (!ws[cellRef].s) ws[cellRef].s = {};
+                    
+                    // BORDAS COMPLETAS (todas as laterais)
+                    ws[cellRef].s = {
+                        border: {
+                            top: { style: 'thin', color: { rgb: '000000' } },
+                            bottom: { style: 'thin', color: { rgb: '000000' } },
+                            left: { style: 'thin', color: { rgb: '000000' } },
+                            right: { style: 'thin', color: { rgb: '000000' } }
+                        },
+                        alignment: {
+                            horizontal: 'center',
+                            vertical: 'center'
+                        }
+                    };
+                    
+                    // Ajustes específicos para algumas células
+                    if (R === 0) { // Título principal
+                        ws[cellRef].s.font = { bold: true, sz: 14 };
+                        ws[cellRef].s.alignment.horizontal = 'center';
+                    }
+                    else if (R === 2) { // Título INFORMAÇÕES DA UNIDADE
+                        ws[cellRef].s.font = { bold: true, sz: 12 };
+                        ws[cellRef].s.alignment.horizontal = 'left';
+                    }
+                    else if (R === 3 || R === 4) { // Linhas de informações
+                        if (C === 1 || C === 4) { // Valores (Carrefour, 27/02/2026, etc)
+                            ws[cellRef].s.font = { bold: true };
+                        }
+                    }
+                    else if (R === 6) { // Cabeçalho da tabela
+                        ws[cellRef].s.font = { bold: true, color: { rgb: 'FFFFFF' } };
+                        ws[cellRef].s.fill = { fgColor: { rgb: 'EE2E31' } }; // Vermelho Brastemp
+                    }
+                    
+                    // Alinhar texto à esquerda para categoria e modelo
+                    if (C === 0 || C === 1) {
+                        if (R > 6) { // Exceto cabeçalho
+                            ws[cellRef].s.alignment.horizontal = 'left';
+                        }
+                    }
+                    
+                    // Negrito para SUBTOTAL e TOTAL
+                    if (ws[cellRef].v && typeof ws[cellRef].v === 'string' && 
+                        (ws[cellRef].v.includes('SUBTOTAL') || ws[cellRef].v.includes('TOTAL'))) {
+                        ws[cellRef].s.font = { bold: true };
+                    }
+                }
+            }
             
             // Adicionar worksheet ao workbook
             XLSX.utils.book_append_sheet(wb, ws, 'Mix Brastemp');
@@ -808,7 +876,7 @@
                 doc.save(`Mix_Brastemp_${inputs.rede || 'Loja'}.pdf`);
             };
             
-            // CONFIGURAÇÃO DO EXCEL PROFISSIONAL COM CATEGORIAS AGRUPADAS
+            // CONFIGURAÇÃO DO EXCEL COM LAYOUT EXATO DA IMAGEM
             document.getElementById('generate-excel').onclick = () => {
                 const inputs = {
                     rede: document.getElementById('rede').value || "Não informada",
