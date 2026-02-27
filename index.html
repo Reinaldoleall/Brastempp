@@ -1,0 +1,799 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#EE2E31"> 
+    <title>Checklist Mix Brastemp</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+    <style>
+        body { font-family: 'Roboto', sans-serif; -webkit-tap-highlight-color: transparent; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        .product-item {
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+        .product-item.selected {
+            background-color: #EE2E31;
+            color: white;
+            border-color: #EE2E31;
+            box-shadow: 0 4px 6px -1px rgba(238, 46, 49, 0.3);
+        }
+        .product-item.selected i {
+            color: white;
+        }
+        .product-item.indisponivel {
+            background-color: #6B7280;
+            color: white;
+            border-color: #6B7280;
+        }
+        .product-item.indisponivel i {
+            color: white;
+        }
+        
+        .quantity-modal {
+            position: fixed;
+            inset: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 100;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(4px);
+        }
+        .quantity-modal.active {
+            display: flex;
+        }
+        .quantity-card {
+            background: white;
+            border-radius: 1.5rem;
+            padding: 1.5rem;
+            width: 90%;
+            max-width: 320px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2);
+            animation: slideUp 0.3s ease-out;
+        }
+        
+        .quantity-badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background-color: #EE2E31;
+            color: white;
+            border-radius: 9999px;
+            width: 20px;
+            height: 20px;
+            font-size: 11px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            border: 2px solid white;
+        }
+        .indisponivel-badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background-color: #6B7280;
+            color: white;
+            border-radius: 9999px;
+            width: 20px;
+            height: 20px;
+            font-size: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            border: 2px solid white;
+        }
+        
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in {
+            animation: fadeIn 0.3s ease-out forwards;
+        }
+
+        .btn-excel {
+            background-color: #1D6F42;
+            color: white;
+        }
+        .btn-excel:hover {
+            background-color: #155A32;
+        }
+
+        .add-product-btn {
+            position: fixed;
+            bottom: 90px;
+            right: 20px;
+            background-color: #EE2E31;
+            color: white;
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 10px rgba(238, 46, 49, 0.5);
+            cursor: pointer;
+            z-index: 45;
+            transition: transform 0.2s;
+        }
+        .add-product-btn:hover {
+            transform: scale(1.1);
+        }
+        .add-product-btn:active {
+            transform: scale(0.95);
+        }
+    </style>
+</head>
+<body class="bg-gray-100 pb-24">
+
+    <!-- Modal de Quantidade -->
+    <div id="quantity-modal" class="quantity-modal">
+        <div class="quantity-card">
+            <h3 class="text-lg font-bold text-gray-800 mb-4" id="modal-product-name">Produto</h3>
+            <p class="text-sm text-gray-500 mb-4" id="modal-product-category">Categoria</p>
+            
+            <div class="flex gap-2 mb-4">
+                <button id="set-indisponivel" class="flex-1 bg-gray-600 text-white font-bold py-3 rounded-xl hover:bg-gray-700 transition shadow-lg">
+                    <i class="fas fa-times-circle mr-1"></i> IND
+                </button>
+            </div>
+            
+            <p class="text-sm text-gray-500 mb-2">Quantidade disponível:</p>
+            <div class="flex items-center justify-between mb-6">
+                <button id="decrease-qty" class="w-12 h-12 rounded-full bg-gray-200 text-gray-600 text-2xl font-bold hover:bg-gray-300 transition flex items-center justify-center">−</button>
+                <input type="number" id="product-quantity" value="1" min="0" max="999" class="w-20 text-center text-2xl font-bold border-2 border-gray-200 rounded-xl p-2 focus:border-red-500 focus:outline-none">
+                <button id="increase-qty" class="w-12 h-12 rounded-full bg-gray-200 text-gray-600 text-2xl font-bold hover:bg-gray-300 transition flex items-center justify-center">+</button>
+            </div>
+            
+            <div class="flex gap-3">
+                <button id="cancel-quantity" class="flex-1 py-3 border-2 border-gray-300 text-gray-600 font-bold rounded-xl hover:bg-gray-100 transition">Cancelar</button>
+                <button id="confirm-quantity" class="flex-1 bg-[#EE2E31] text-white font-bold py-3 rounded-xl hover:bg-red-700 transition shadow-lg">Confirmar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Adicionar Produto -->
+    <div id="add-product-modal" class="fixed inset-0 bg-black bg-opacity-60 z-[70] hidden flex items-center justify-center backdrop-blur-sm">
+        <div class="bg-white w-full max-w-sm rounded-2xl shadow-2xl p-5">
+            <h3 class="text-lg font-bold text-gray-800 mb-4 flex items-center">
+                <i class="fas fa-plus-circle text-[#EE2E31] mr-2"></i> Adicionar Produto
+            </h3>
+            
+            <div class="space-y-4">
+                <div>
+                    <label class="text-xs text-gray-500 font-bold uppercase">Categoria</label>
+                    <select id="new-product-category" class="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-red-500 focus:outline-none">
+                        <option value="Geladeiras">Geladeiras</option>
+                        <option value="MWO">Microondas</option>
+                        <option value="Lavadora">Lavadora</option>
+                        <option value="Fogão">Fogão</option>
+                        <option value="Outros">Outros</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label class="text-xs text-gray-500 font-bold uppercase">Código do Produto</label>
+                    <input type="text" id="new-product-code" placeholder="Ex: BRM44HB" class="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-red-500 focus:outline-none">
+                </div>
+                
+                <div>
+                    <label class="text-xs text-gray-500 font-bold uppercase">Quantidade Inicial</label>
+                    <input type="number" id="new-product-qty" value="1" min="0" class="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-red-500 focus:outline-none">
+                </div>
+            </div>
+            
+            <div class="flex gap-3 mt-6">
+                <button id="cancel-add-product" class="flex-1 py-3 border-2 border-gray-300 text-gray-600 font-bold rounded-xl hover:bg-gray-100 transition">Cancelar</button>
+                <button id="confirm-add-product" class="flex-1 bg-[#EE2E31] text-white font-bold py-3 rounded-xl hover:bg-red-700 transition shadow-lg">Adicionar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Header -->
+    <header class="bg-[#EE2E31] text-white p-4 sticky top-0 z-50 shadow-md flex justify-between items-center">
+        <div class="flex items-center gap-2">
+            <i class="fas fa-clipboard-check"></i>
+            <h1 class="text-lg font-bold tracking-wide">Mix Brastemp</h1>
+        </div>
+        <button id="reset-all" class="text-xs bg-red-700 hover:bg-red-800 border border-red-500 px-3 py-1 rounded-full transition">
+            <i class="fas fa-eraser mr-1"></i> Limpar
+        </button>
+    </header>
+
+    <!-- Botão flutuante para adicionar produto -->
+    <div id="add-product-float" class="add-product-btn">
+        <i class="fas fa-plus text-2xl"></i>
+    </div>
+
+    <div class="container mx-auto p-4 max-w-md">
+        
+        <!-- Info da Loja -->
+        <div class="bg-white p-4 rounded-2xl shadow-sm mb-4">
+            <h3 class="text-gray-400 text-xs font-bold uppercase tracking-wider mb-3 flex items-center">
+                <i class="fas fa-store mr-2"></i> Dados da Visita
+            </h3>
+            <div class="space-y-3">
+                <input type="text" id="rede" placeholder="Rede" class="w-full bg-gray-50 p-3 rounded-xl border-none focus:ring-2 focus:ring-red-500 text-gray-700 text-sm transition">
+                <div class="grid grid-cols-2 gap-3">
+                    <input type="text" id="id-rede" placeholder="ID Loja" class="w-full bg-gray-50 p-3 rounded-xl border-none focus:ring-2 focus:ring-red-500 text-gray-700 text-sm transition">
+                    <input type="text" id="filial" placeholder="Filial" class="w-full bg-gray-50 p-3 rounded-xl border-none focus:ring-2 focus:ring-red-500 text-gray-700 text-sm transition">
+                </div>
+                <div class="relative">
+                    <span class="absolute left-3 top-3 text-gray-400 text-xs">Data</span>
+                    <input type="date" id="data" class="w-full bg-gray-50 pt-6 pb-2 px-3 rounded-xl border-none focus:ring-2 focus:ring-red-500 text-gray-700 text-sm transition">
+                </div>
+                <div>
+                    <textarea id="observacao" placeholder="Observações (ex: produtos de linha nova não encontrados)" rows="2" class="w-full bg-gray-50 p-3 rounded-xl border-none focus:ring-2 focus:ring-red-500 text-gray-700 text-sm transition"></textarea>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-red-50 border-l-4 border-red-500 p-3 rounded-r mb-4 shadow-sm">
+            <p class="text-red-800 text-xs font-bold uppercase tracking-wider mb-1">Instruções</p>
+            <h2 class="text-gray-800 text-sm">Toque nos produtos para adicionar quantidade ou marcar como IND (indisponível). Use o botão vermelho (+) para adicionar produtos novos.</h2>
+        </div>
+
+        <!-- Container de Produtos -->
+        <div id="products-container" class="space-y-4">
+            <!-- As categorias serão injetadas aqui -->
+        </div>
+        
+        <div class="h-8"></div>
+    </div>
+
+    <!-- Modal de Resultado -->
+    <div id="result-modal" class="fixed inset-0 bg-black bg-opacity-60 z-[60] hidden flex items-end sm:items-center justify-center backdrop-blur-sm">
+        <div class="bg-white w-full max-w-md sm:rounded-2xl rounded-t-2xl shadow-2xl transform transition-transform duration-300 max-h-[90vh] flex flex-col">
+            
+            <div class="p-4 border-b flex justify-between items-center bg-gray-50 rounded-t-2xl">
+                <h3 class="font-bold text-gray-800">Mix Gerado</h3>
+                <button id="close-modal" class="text-gray-500 hover:text-gray-700 bg-gray-200 rounded-full w-8 h-8 flex items-center justify-center">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+
+            <div class="p-4 overflow-y-auto no-scrollbar">
+                <h4 class="text-xs font-bold text-gray-400 uppercase mb-2">Prévia do Texto</h4>
+                <div id="text-preview" class="whitespace-pre-wrap text-xs bg-gray-50 text-gray-900 p-4 rounded-xl border border-gray-200 font-mono max-h-80 overflow-y-auto select-all"></div>
+            </div>
+
+            <div class="p-4 border-t bg-white flex gap-2">
+                <button id="generate-excel" class="flex-1 btn-excel text-white font-bold py-3 px-4 rounded-xl shadow-lg hover:bg-green-800 transition flex items-center justify-center gap-2">
+                    <i class="fas fa-file-excel"></i> Excel
+                </button>
+                <button id="generate-pdf" class="flex-1 bg-red-600 text-white font-bold py-3 px-4 rounded-xl shadow-lg hover:bg-red-700 transition flex items-center justify-center gap-2">
+                    <i class="fas fa-file-pdf"></i> PDF
+                </button>
+                <a id="whatsapp-link" href="#" target="_blank" class="flex-1 bg-green-600 text-white font-bold py-3 px-4 rounded-xl shadow-lg hover:bg-green-700 transition flex items-center justify-center gap-2">
+                    <i class="fab fa-whatsapp text-xl"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Botão Flutuante Inferior -->
+    <div class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] z-40">
+        <div class="max-w-md mx-auto">
+            <button id="generate-report" class="w-full bg-[#EE2E31] text-white font-bold py-3 rounded-xl shadow-lg hover:bg-red-700 active:scale-95 transition flex items-center justify-center gap-2">
+                <i class="fas fa-check-circle mr-2"></i> Gerar Relatório
+            </button>
+        </div>
+    </div>
+
+    <script>
+        const { jsPDF } = window.jspdf;
+        
+        // Data atual automática
+        const today = new Date();
+        document.getElementById('data').valueAsDate = today;
+
+        // Lista de Produtos Base
+        const baseCatalog = {
+            "Geladeiras": [
+                "BRM44HB", "BRM44HK", "BRO85AK", "BRO85MK", "BRE57FB", "BRE57FK", "BRE57FE",
+                "BRM55FK", "BRM55FB", "CMR53FK", "CRM53FB", "CRM53MB", "CRM44MB", "CRM44MK",
+                "BRM46MB", "BRM46MK", "BRM62AB", "BRM62AK", "BRM62AE", "BRM66AB", "BRM66AK",
+                "BRM52MB", "BRM52MK", "CRM40MB"
+            ],
+            "MWO": [
+                "CMS46AB", "BMS46AB", "BMS46AR", "BMS20AR", "CMO20BF"
+            ],
+            "Lavadora": [
+                "CWH12BB", "CWN13AB", "CWN15AB", "BWK13AB", "BWF15AB", "BWT15A9", "BWJ14AB",
+                "BWJ14A9", "BWF14AB", "BWF18AB", "BWK17AB"
+            ],
+            "Fogão": [
+                "CFO4NAB", "BFO4NBB", "BFS5NDB", "CFS5VAR", "CFO4NAR"
+            ]
+        };
+
+        // Carregar produtos personalizados do localStorage
+        let customProducts = JSON.parse(localStorage.getItem('customProducts') || '{}');
+
+        // Mesclar catálogo base com produtos personalizados
+        function getFullCatalog() {
+            const fullCatalog = JSON.parse(JSON.stringify(baseCatalog));
+            
+            // Adicionar produtos personalizados
+            Object.keys(customProducts).forEach(key => {
+                const [category, product] = key.split('-');
+                if (category && product) {
+                    if (!fullCatalog[category]) {
+                        fullCatalog[category] = [];
+                    }
+                    if (!fullCatalog[category].includes(product)) {
+                        fullCatalog[category].push(product);
+                    }
+                }
+            });
+            
+            return fullCatalog;
+        }
+
+        // Ícones por categoria
+        const icons = {
+            "Geladeiras": "fa-snowflake",
+            "MWO": "fa-box-open",
+            "Lavadora": "fa-tshirt",
+            "Fogão": "fa-fire",
+            "Outros": "fa-tag"
+        };
+
+        // Estado dos produtos
+        let selectedProducts = {};
+
+        // Variáveis para o modal de quantidade
+        let currentProduct = null;
+        let currentCategory = null;
+        let currentButton = null;
+
+        // Função para renderizar o catálogo
+        function renderCatalog() {
+            const container = document.getElementById('products-container');
+            container.innerHTML = '';
+
+            const fullCatalog = getFullCatalog();
+
+            for (const [category, products] of Object.entries(fullCatalog)) {
+                const section = document.createElement('div');
+                section.className = "bg-white p-4 rounded-2xl shadow-sm animate-fade-in";
+                
+                const header = document.createElement('h3');
+                header.className = "text-[#EE2E31] font-bold text-lg mb-3 flex items-center border-b pb-2";
+                header.innerHTML = `<i class="fas ${icons[category] || 'fa-tag'} mr-2 text-sm opacity-70"></i> ${category}`;
+                section.appendChild(header);
+
+                const grid = document.createElement('div');
+                grid.className = "grid grid-cols-2 sm:grid-cols-3 gap-2";
+
+                products.sort().forEach(prod => {
+                    const productId = `${category}-${prod}`;
+                    const btn = document.createElement('button');
+                    
+                    // Determinar classe baseada no estado
+                    let baseClass = "product-item text-left p-3 rounded-xl border border-gray-200 bg-gray-50 text-gray-600 text-xs sm:text-sm font-medium flex items-center justify-between group relative";
+                    
+                    if (selectedProducts[productId]) {
+                        if (selectedProducts[productId].indisponivel) {
+                            baseClass = baseClass.replace('product-item', 'product-item indisponivel');
+                        } else if (selectedProducts[productId].quantity > 0) {
+                            baseClass = baseClass.replace('product-item', 'product-item selected');
+                        }
+                    }
+                    
+                    btn.className = baseClass;
+                    btn.dataset.product = prod;
+                    btn.dataset.category = category;
+                    btn.dataset.productId = productId;
+                    
+                    // Determinar ícone e badge
+                    let icon = 'fa-plus-circle text-gray-300';
+                    let badge = '';
+                    
+                    if (selectedProducts[productId]) {
+                        if (selectedProducts[productId].indisponivel) {
+                            icon = 'fa-times-circle text-white';
+                            badge = `<span class="indisponivel-badge">IND</span>`;
+                        } else if (selectedProducts[productId].quantity > 0) {
+                            icon = 'fa-check-circle text-white';
+                            badge = `<span class="quantity-badge">${selectedProducts[productId].quantity}</span>`;
+                        }
+                    }
+                    
+                    btn.innerHTML = `
+                        <span class="truncate pr-2">${prod}</span>
+                        <i class="fas ${icon} transition-colors"></i>
+                        ${badge}
+                    `;
+                    
+                    btn.onclick = (e) => {
+                        e.preventDefault();
+                        openQuantityModal(btn, category, prod);
+                    };
+
+                    grid.appendChild(btn);
+                });
+
+                section.appendChild(grid);
+                container.appendChild(section);
+            }
+        }
+
+        // Abrir modal de quantidade
+        function openQuantityModal(btn, category, product) {
+            currentButton = btn;
+            currentCategory = category;
+            currentProduct = product;
+            
+            const productId = `${category}-${product}`;
+            const currentData = selectedProducts[productId] || {};
+            
+            document.getElementById('modal-product-name').textContent = product;
+            document.getElementById('modal-product-category').textContent = `Categoria: ${category}`;
+            
+            if (currentData.indisponivel) {
+                document.getElementById('product-quantity').value = 0;
+            } else {
+                document.getElementById('product-quantity').value = currentData.quantity || 1;
+            }
+            
+            document.getElementById('quantity-modal').classList.add('active');
+        }
+
+        // Fechar modal de quantidade
+        function closeQuantityModal() {
+            document.getElementById('quantity-modal').classList.remove('active');
+            currentProduct = null;
+            currentCategory = null;
+            currentButton = null;
+        }
+
+        // Marcar como indisponível
+        function setIndisponivel() {
+            if (currentProduct && currentCategory && currentButton) {
+                const productId = `${currentCategory}-${currentProduct}`;
+                
+                selectedProducts[productId] = {
+                    product: currentProduct,
+                    category: currentCategory,
+                    quantity: 0,
+                    indisponivel: true
+                };
+                
+                // Atualizar visual
+                currentButton.classList.remove('selected');
+                currentButton.classList.add('indisponivel');
+                currentButton.querySelector('i').className = "fas fa-times-circle text-white";
+                
+                // Remover badge antigo se existir
+                const oldBadge = currentButton.querySelector('.quantity-badge, .indisponivel-badge');
+                if (oldBadge) oldBadge.remove();
+                
+                // Adicionar badge IND
+                const badge = document.createElement('span');
+                badge.className = 'indisponivel-badge';
+                badge.textContent = 'IND';
+                currentButton.appendChild(badge);
+            }
+            
+            closeQuantityModal();
+        }
+
+        // Atualizar visual do botão
+        function updateButtonVisual(btn, category, product, quantity) {
+            const productId = `${category}-${product}`;
+            
+            // Remover classes antigas
+            btn.classList.remove('selected', 'indisponivel');
+            
+            // Remover badge antigo
+            const oldBadge = btn.querySelector('.quantity-badge, .indisponivel-badge');
+            if (oldBadge) oldBadge.remove();
+            
+            if (quantity > 0) {
+                btn.classList.add('selected');
+                btn.querySelector('i').className = "fas fa-check-circle text-white";
+                
+                const badge = document.createElement('span');
+                badge.className = 'quantity-badge';
+                badge.textContent = quantity;
+                btn.appendChild(badge);
+                
+                selectedProducts[productId] = {
+                    product: product,
+                    category: category,
+                    quantity: quantity,
+                    indisponivel: false
+                };
+            } else {
+                btn.classList.remove('selected', 'indisponivel');
+                btn.querySelector('i').className = "fas fa-plus-circle text-gray-300 transition-colors group-hover:text-red-300";
+                delete selectedProducts[productId];
+            }
+        }
+
+        // Função para gerar texto do relatório
+        function generateTextReport(inputs, selectedData, observacao) {
+            let text = `*Mix Brastemp e Consul no CD*\n\n`;
+            text += `*Rede:* ${inputs.rede}\n`;
+            text += `*Data:* ${inputs.data}\n\n`;
+
+            text += `*PRODUTOS DISPONÍVEIS NO CD:*\n\n`;
+
+            const order = ["Geladeiras", "MWO", "Lavadora", "Fogão", "Outros"];
+            let hasItems = false;
+
+            order.forEach(cat => {
+                const catProducts = Object.entries(selectedData)
+                    .filter(([key, value]) => key.startsWith(cat))
+                    .sort((a, b) => a[1].product.localeCompare(b[1].product));
+                
+                if (catProducts.length > 0) {
+                    hasItems = true;
+                    text += `*${cat}:*\n`;
+                    
+                    catProducts.forEach(([key, data]) => {
+                        if (data.indisponivel) {
+                            text += `  •  ${data.product}: 00 *(IND)*\n`;
+                        } else {
+                            const qtyStr = data.quantity.toString().padStart(2, '0');
+                            text += `  •  ${data.product}: ${qtyStr} unidade(s)\n`;
+                        }
+                    });
+                    text += `\n`;
+                }
+            });
+
+            if (!hasItems) {
+                text += "_Nenhum produto selecionado._\n\n";
+            }
+
+            text += ` *Obs:* *(IND)= INDISPONÍVEL.\n\n`;
+            
+            if (observacao && observacao.trim() !== '') {
+                text += `${observacao}`;
+            } else {
+                text += `• Outros produtos de linha nova como BRM62AB, BRM52 não apareceram durante a busca dos mesmos no sistema`;
+            }
+
+            return text;
+        }
+
+        // Função para formatar data
+        function formatDate(dateStr) {
+            if (!dateStr) return "";
+            const [year, month, day] = dateStr.split('-');
+            return `${day}/${month}/${year}`;
+        }
+
+        // Event Listeners
+        document.addEventListener('DOMContentLoaded', renderCatalog);
+
+        // Controles do modal de quantidade
+        document.getElementById('increase-qty').addEventListener('click', () => {
+            const input = document.getElementById('product-quantity');
+            input.value = Math.min(999, parseInt(input.value) + 1);
+        });
+
+        document.getElementById('decrease-qty').addEventListener('click', () => {
+            const input = document.getElementById('product-quantity');
+            input.value = Math.max(0, parseInt(input.value) - 1);
+        });
+
+        document.getElementById('set-indisponivel').addEventListener('click', setIndisponivel);
+
+        document.getElementById('confirm-quantity').addEventListener('click', () => {
+            const quantity = parseInt(document.getElementById('product-quantity').value);
+            
+            if (currentProduct && currentCategory && currentButton) {
+                updateButtonVisual(currentButton, currentCategory, currentProduct, quantity);
+            }
+            
+            closeQuantityModal();
+        });
+
+        document.getElementById('cancel-quantity').addEventListener('click', closeQuantityModal);
+
+        // Fechar modal ao clicar fora
+        document.getElementById('quantity-modal').addEventListener('click', (e) => {
+            if (e.target === document.getElementById('quantity-modal')) {
+                closeQuantityModal();
+            }
+        });
+
+        // Reset all
+        document.getElementById('reset-all').addEventListener('click', () => {
+            if(confirm('Limpar todas as seleções?')) {
+                selectedProducts = {};
+                renderCatalog();
+                document.getElementById('rede').value = '';
+                document.getElementById('id-rede').value = '';
+                document.getElementById('filial').value = '';
+                document.getElementById('observacao').value = '';
+                window.scrollTo(0,0);
+            }
+        });
+
+        // Botão flutuante para adicionar produto
+        document.getElementById('add-product-float').addEventListener('click', () => {
+            document.getElementById('add-product-modal').classList.remove('hidden');
+        });
+
+        document.getElementById('cancel-add-product').addEventListener('click', () => {
+            document.getElementById('add-product-modal').classList.add('hidden');
+        });
+
+        document.getElementById('confirm-add-product').addEventListener('click', () => {
+            const category = document.getElementById('new-product-category').value;
+            const productCode = document.getElementById('new-product-code').value.trim().toUpperCase();
+            const quantity = parseInt(document.getElementById('new-product-qty').value) || 1;
+            
+            if (productCode === '') {
+                alert('Digite o código do produto');
+                return;
+            }
+            
+            const productId = `${category}-${productCode}`;
+            
+            // Salvar no catálogo personalizado
+            customProducts[productId] = {
+                category: category,
+                product: productCode
+            };
+            localStorage.setItem('customProducts', JSON.stringify(customProducts));
+            
+            // Adicionar aos selecionados
+            selectedProducts[productId] = {
+                product: productCode,
+                category: category,
+                quantity: quantity,
+                indisponivel: false
+            };
+            
+            // Re-renderizar
+            renderCatalog();
+            
+            // Limpar e fechar modal
+            document.getElementById('new-product-code').value = '';
+            document.getElementById('new-product-qty').value = '1';
+            document.getElementById('add-product-modal').classList.add('hidden');
+        });
+
+        // Gerar relatório
+        document.getElementById('generate-report').addEventListener('click', () => {
+            const inputs = {
+                rede: document.getElementById('rede').value || "-",
+                id: document.getElementById('id-rede').value || "-",
+                filial: document.getElementById('filial').value || "-",
+                data: formatDate(document.getElementById('data').value)
+            };
+
+            const observacao = document.getElementById('observacao').value;
+            
+            const textReport = generateTextReport(inputs, selectedProducts, observacao);
+            
+            // Preencher Modal
+            document.getElementById('text-preview').textContent = textReport;
+            
+            // Configurar WhatsApp
+            const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(textReport)}`;
+            document.getElementById('whatsapp-link').href = whatsappUrl;
+
+            // Configurar PDF
+            document.getElementById('generate-pdf').onclick = () => {
+                const doc = new jsPDF();
+                doc.setFontSize(10);
+                const splitText = doc.splitTextToSize(textReport, 180);
+                doc.text(splitText, 15, 15);
+                doc.save(`Mix_Brastemp_${inputs.rede || 'Loja'}.pdf`);
+            };
+            
+            // CONFIGURAÇÃO DO EXCEL PROFISSIONAL
+            document.getElementById('generate-excel').onclick = () => {
+                const inputs = {
+                    rede: document.getElementById('rede').value || "Não informada",
+                    id: document.getElementById('id-rede').value || "-",
+                    filial: document.getElementById('filial').value || "-",
+                    data: formatDate(document.getElementById('data').value),
+                    obs: document.getElementById('observacao').value || "Sem observações adicionais."
+                };
+
+                // 1. Criar os dados da planilha com estrutura de tabela
+                const wb = XLSX.utils.book_new();
+                
+                // Cabeçalho de informações da visita
+                const wsData = [
+                    ["RELATÓRIO DE MIX E DISPONIBILIDADE - BRASTEMP/CONSUL"],
+                    [""], // Linha vazia
+                    ["INFORMAÇÕES DA UNIDADE"],
+                    ["Rede:", inputs.rede, "", "Data da Visita:", inputs.data],
+                    ["ID Loja:", inputs.id, "", "Filial:", inputs.filial],
+                    [""],
+                    ["DETALHAMENTO DOS PRODUTOS"],
+                    ["CATEGORIA", "MODELO", "QTD DISPONÍVEL", "STATUS", "SITUAÇÃO"]
+                ];
+
+                // 2. Adicionar os produtos selecionados
+                const categoriasOrdem = ["Geladeiras", "MWO", "Lavadora", "Fogão", "Outros"];
+                
+                categoriasOrdem.forEach(cat => {
+                    const itens = Object.values(selectedProducts)
+                        .filter(p => p.category === cat)
+                        .sort((a, b) => a.product.localeCompare(b.product));
+
+                    itens.forEach(item => {
+                        const status = item.indisponivel ? "INDISPONÍVEL" : "DISPONÍVEL";
+                        const situacao = item.indisponivel ? "Crítico" : (item.quantity < 2 ? "Atenção" : "Ok");
+                        wsData.push([
+                            item.category.toUpperCase(),
+                            item.product,
+                            item.indisponivel ? 0 : item.quantity,
+                            status,
+                            situacao
+                        ]);
+                    });
+                });
+
+                // Adicionar observações ao final
+                wsData.push([""]);
+                wsData.push(["OBSERVAÇÕES GERAIS:"]);
+                wsData.push([inputs.obs]);
+
+                // 3. Converter para Worksheet
+                const ws = XLSX.utils.aoa_to_sheet(wsData);
+
+                // 4. Ajuste Automático de Colunas (Largura)
+                const colWidths = [
+                    { wch: 18 }, // Categoria
+                    { wch: 20 }, // Modelo
+                    { wch: 15 }, // Qtd
+                    { wch: 15 }, // Status
+                    { wch: 12 }, // Situação
+                ];
+                ws['!cols'] = colWidths;
+
+                // 5. Mesclar células do título para ficar bonito
+                ws['!merges'] = [
+                    { s: { r: 0, c: 0 }, e: { r: 0, c: 4 } }, // Título principal
+                    { s: { r: 2, c: 0 }, e: { r: 2, c: 4 } }, // Subtítulo Unidade
+                    { s: { r: 6, c: 0 }, e: { r: 6, c: 4 } }  // Subtítulo Produtos
+                ];
+
+                // 6. Gerar e baixar arquivo
+                XLSX.utils.book_append_sheet(wb, ws, 'Checklist Mix');
+                const fileName = `Mix_Brastemp_${inputs.rede.replace(/\s+/g, '_')}_${inputs.data.replace(/\//g, '-')}.xlsx`;
+                XLSX.writeFile(wb, fileName);
+            };
+
+            // Abrir Modal
+            document.getElementById('result-modal').classList.remove('hidden');
+        });
+
+        document.getElementById('close-modal').addEventListener('click', () => {
+            document.getElementById('result-modal').classList.add('hidden');
+        });
+
+        // Fechar modal de resultado ao clicar fora
+        document.getElementById('result-modal').addEventListener('click', (e) => {
+            if (e.target === document.getElementById('result-modal')) {
+                document.getElementById('result-modal').classList.add('hidden');
+            }
+        });
+    </script>
+</body>
+</html>
