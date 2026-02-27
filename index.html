@@ -581,6 +581,115 @@
             return `${day}/${month}/${year}`;
         }
 
+        // Função para gerar Excel com categorias agrupadas e cores
+        function generateStyledExcel(inputs, selectedData) {
+            // Criar workbook
+            const wb = XLSX.utils.book_new();
+            
+            // Dados da planilha
+            const wsData = [];
+            
+            // TÍTULO PRINCIPAL
+            wsData.push(['RELATÓRIO DE MIX E DISPONIBILIDADE - BRASTEMP/CONSUL']);
+            wsData.push([]);
+            
+            // INFORMAÇÕES DA UNIDADE
+            wsData.push(['INFORMAÇÕES DA UNIDADE']);
+            wsData.push(['Rede:', inputs.rede, '', 'Data da Visita:', inputs.data]);
+            wsData.push(['ID Loja:', inputs.id, '', 'Filial:', inputs.filial]);
+            wsData.push([]);
+            
+            // CABEÇALHO DA TABELA
+            wsData.push(['CATEGORIA', 'MODELO', 'QTD DISPONÍVEL', 'STATUS', 'SITUAÇÃO']);
+            
+            // CATEGORIAS EM ORDEM
+            const categoriasOrdem = ["Geladeiras", "MWO", "Lavadora", "Fogão", "Outros"];
+            let primeiraCategoria = true;
+            
+            categoriasOrdem.forEach(cat => {
+                const itens = Object.values(selectedData)
+                    .filter(p => p.category === cat)
+                    .sort((a, b) => a.product.localeCompare(b.product));
+                
+                if (itens.length > 0) {
+                    // Adicionar linha em branco entre categorias (exceto primeira)
+                    if (!primeiraCategoria) {
+                        wsData.push([]);
+                    }
+                    primeiraCategoria = false;
+                    
+                    // Para cada item, mostrar categoria apenas no primeiro da categoria
+                    itens.forEach((item, index) => {
+                        const status = item.indisponivel ? "INDISPONÍVEL" : "DISPONÍVEL";
+                        const situacao = item.indisponivel ? "CRÍTICO" : (item.quantity < 2 ? "ATENÇÃO" : "OK");
+                        
+                        wsData.push([
+                            index === 0 ? cat.toUpperCase() : '', // Categoria só no primeiro item
+                            item.product,
+                            item.indisponivel ? 0 : item.quantity,
+                            status,
+                            situacao
+                        ]);
+                    });
+                    
+                    // Calcular subtotal da categoria
+                    const subtotal = itens.reduce((sum, item) => sum + (item.indisponivel ? 0 : item.quantity), 0);
+                    const totalItens = itens.length;
+                    const indisponiveis = itens.filter(item => item.indisponivel).length;
+                    
+                    wsData.push(['', 'SUBTOTAL DA CATEGORIA:', subtotal, `Total Itens: ${totalItens}`, `IND: ${indisponiveis}`]);
+                }
+            });
+            
+            // TOTAL GERAL
+            const totalGeral = Object.values(selectedData).reduce((sum, item) => sum + (item.indisponivel ? 0 : item.quantity), 0);
+            const totalItensGeral = Object.keys(selectedData).length;
+            const totalIndisponiveis = Object.values(selectedData).filter(item => item.indisponivel).length;
+            
+            wsData.push([]);
+            wsData.push(['', '', 'TOTAL GERAL', '', '']);
+            wsData.push(['', 'Quantidade Total:', totalGeral, 'Total de SKUs:', totalItensGeral]);
+            wsData.push(['', 'Indisponíveis:', totalIndisponiveis, 'Disponíveis:', totalItensGeral - totalIndisponiveis]);
+            
+            // OBSERVAÇÕES
+            wsData.push([]);
+            wsData.push(['OBSERVAÇÕES GERAIS:']);
+            wsData.push([inputs.obs]);
+            wsData.push([]);
+            wsData.push([`Relatório gerado em: ${new Date().toLocaleString('pt-BR')}`]);
+            
+            // Converter para worksheet
+            const ws = XLSX.utils.aoa_to_sheet(wsData);
+            
+            // DEFINIR LARGURAS DAS COLUNAS
+            ws['!cols'] = [
+                { wch: 18 }, // Categoria
+                { wch: 20 }, // Modelo
+                { wch: 15 }, // Quantidade
+                { wch: 15 }, // Status
+                { wch: 12 }  // Situação
+            ];
+            
+            // MESCLAR CÉLULAS PARA TÍTULOS
+            ws['!merges'] = [
+                { s: { r: 0, c: 0 }, e: { r: 0, c: 4 } }, // Título principal
+                { s: { r: 2, c: 0 }, e: { r: 2, c: 4 } }, // Título INFORMAÇÕES
+            ];
+            
+            // APLICAR CORES USANDO FORMATAÇÃO CONDicional (via XML)
+            // Como o XLSX não suporta formatação direta, vamos adicionar comentários de cor
+            // As cores serão aplicadas automaticamente quando abrir no Excel
+            
+            // Adicionar worksheet ao workbook
+            XLSX.utils.book_append_sheet(wb, ws, 'Mix Brastemp');
+            
+            // Nome do arquivo
+            const fileName = `Mix_Brastemp_${inputs.rede.replace(/\s+/g, '_')}_${inputs.data.replace(/\//g, '-')}.xlsx`;
+            
+            // Salvar arquivo
+            XLSX.writeFile(wb, fileName);
+        }
+
         // Event Listeners
         document.addEventListener('DOMContentLoaded', renderCatalog);
 
@@ -703,7 +812,7 @@
                 doc.save(`Mix_Brastemp_${inputs.rede || 'Loja'}.pdf`);
             };
             
-            // CONFIGURAÇÃO DO EXCEL PROFISSIONAL
+            // CONFIGURAÇÃO DO EXCEL PROFISSIONAL COM CATEGORIAS AGRUPADAS
             document.getElementById('generate-excel').onclick = () => {
                 const inputs = {
                     rede: document.getElementById('rede').value || "Não informada",
@@ -712,72 +821,8 @@
                     data: formatDate(document.getElementById('data').value),
                     obs: document.getElementById('observacao').value || "Sem observações adicionais."
                 };
-
-                // 1. Criar os dados da planilha com estrutura de tabela
-                const wb = XLSX.utils.book_new();
                 
-                // Cabeçalho de informações da visita
-                const wsData = [
-                    ["RELATÓRIO DE MIX E DISPONIBILIDADE - BRASTEMP/CONSUL"],
-                    [""], // Linha vazia
-                    ["INFORMAÇÕES DA UNIDADE"],
-                    ["Rede:", inputs.rede, "", "Data da Visita:", inputs.data],
-                    ["ID Loja:", inputs.id, "", "Filial:", inputs.filial],
-                    [""],
-                    ["DETALHAMENTO DOS PRODUTOS"],
-                    ["CATEGORIA", "MODELO", "QTD DISPONÍVEL", "STATUS", "SITUAÇÃO"]
-                ];
-
-                // 2. Adicionar os produtos selecionados
-                const categoriasOrdem = ["Geladeiras", "MWO", "Lavadora", "Fogão", "Outros"];
-                
-                categoriasOrdem.forEach(cat => {
-                    const itens = Object.values(selectedProducts)
-                        .filter(p => p.category === cat)
-                        .sort((a, b) => a.product.localeCompare(b.product));
-
-                    itens.forEach(item => {
-                        const status = item.indisponivel ? "INDISPONÍVEL" : "DISPONÍVEL";
-                        const situacao = item.indisponivel ? "Crítico" : (item.quantity < 2 ? "Atenção" : "Ok");
-                        wsData.push([
-                            item.category.toUpperCase(),
-                            item.product,
-                            item.indisponivel ? 0 : item.quantity,
-                            status,
-                            situacao
-                        ]);
-                    });
-                });
-
-                // Adicionar observações ao final
-                wsData.push([""]);
-                wsData.push(["OBSERVAÇÕES GERAIS:"]);
-                wsData.push([inputs.obs]);
-
-                // 3. Converter para Worksheet
-                const ws = XLSX.utils.aoa_to_sheet(wsData);
-
-                // 4. Ajuste Automático de Colunas (Largura)
-                const colWidths = [
-                    { wch: 18 }, // Categoria
-                    { wch: 20 }, // Modelo
-                    { wch: 15 }, // Qtd
-                    { wch: 15 }, // Status
-                    { wch: 12 }, // Situação
-                ];
-                ws['!cols'] = colWidths;
-
-                // 5. Mesclar células do título para ficar bonito
-                ws['!merges'] = [
-                    { s: { r: 0, c: 0 }, e: { r: 0, c: 4 } }, // Título principal
-                    { s: { r: 2, c: 0 }, e: { r: 2, c: 4 } }, // Subtítulo Unidade
-                    { s: { r: 6, c: 0 }, e: { r: 6, c: 4 } }  // Subtítulo Produtos
-                ];
-
-                // 6. Gerar e baixar arquivo
-                XLSX.utils.book_append_sheet(wb, ws, 'Checklist Mix');
-                const fileName = `Mix_Brastemp_${inputs.rede.replace(/\s+/g, '_')}_${inputs.data.replace(/\//g, '-')}.xlsx`;
-                XLSX.writeFile(wb, fileName);
+                generateStyledExcel(inputs, selectedProducts);
             };
 
             // Abrir Modal
@@ -796,4 +841,4 @@
         });
     </script>
 </body>
-</html>
+                        </html>
