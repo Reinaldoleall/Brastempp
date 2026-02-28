@@ -9,7 +9,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
 
     <style>
         body { font-family: 'Roboto', sans-serif; -webkit-tap-highlight-color: transparent; }
@@ -581,12 +581,12 @@
             return `${day}/${month}/${year}`;
         }
 
-        // Função para gerar Excel com layout IDÊNTICO à imagem (bordas, centralizado)
+        // Função para gerar Excel com layout IDÊNTICO à imagem usando xlsx-js-style
         function generateStyledExcel(inputs, selectedData) {
             // Criar workbook
             const wb = XLSX.utils.book_new();
             
-            // Dados da planilha
+            // Dados da planilha com estilo
             const wsData = [];
             
             // TÍTULO PRINCIPAL
@@ -676,14 +676,18 @@
                 { s: { r: 2, c: 0 }, e: { r: 2, c: 4 } }, // Título INFORMAÇÕES DA UNIDADE
             ];
             
-            // APLICAR FORMATAÇÃO COM BORDAS E CENTRALIZAÇÃO
-            // Definir o intervalo de células que terão bordas
+            // APLICAR ESTILOS USANDO XLSX-JS-STYLE
+            // Estilo base com bordas
+            const borderStyle = {
+                top: { style: 'thin', color: { rgb: '000000' } },
+                bottom: { style: 'thin', color: { rgb: '000000' } },
+                left: { style: 'thin', color: { rgb: '000000' } },
+                right: { style: 'thin', color: { rgb: '000000' } }
+            };
+            
+            // Percorrer todas as células para aplicar estilos
             const range = XLSX.utils.decode_range(ws['!ref']);
             
-            // Inicializar objeto de estilos se não existir
-            if (!ws['!cells']) ws['!cells'] = {};
-            
-            // Aplicar bordas e alinhamento a todas as células
             for (let R = range.s.r; R <= range.e.r; R++) {
                 for (let C = range.s.c; C <= range.e.c; C++) {
                     const cellRef = XLSX.utils.encode_cell({ r: R, c: C });
@@ -693,56 +697,96 @@
                         ws[cellRef] = { t: 's', v: '' };
                     }
                     
-                    // Inicializar objeto de estilo
+                    // Inicializar estilo se não existir
                     if (!ws[cellRef].s) ws[cellRef].s = {};
                     
-                    // BORDAS COMPLETAS (todas as laterais)
-                    ws[cellRef].s = {
-                        border: {
-                            top: { style: 'thin', color: { rgb: '000000' } },
-                            bottom: { style: 'thin', color: { rgb: '000000' } },
-                            left: { style: 'thin', color: { rgb: '000000' } },
-                            right: { style: 'thin', color: { rgb: '000000' } }
-                        },
-                        alignment: {
-                            horizontal: 'center',
-                            vertical: 'center'
-                        }
+                    // APLICAR BORDAS EM TODAS AS CÉLULAS
+                    ws[cellRef].s.border = borderStyle;
+                    
+                    // ALINHAMENTO PADRÃO (CENTRALIZADO)
+                    ws[cellRef].s.alignment = {
+                        horizontal: 'center',
+                        vertical: 'center'
                     };
                     
-                    // Ajustes específicos para algumas células
-                    if (R === 0) { // Título principal
+                    // ESTILOS ESPECÍFICOS BASEADOS NA LINHA E CONTEÚDO
+                    const cellValue = ws[cellRef].v;
+                    
+                    // Linha 0 - Título principal
+                    if (R === 0) {
                         ws[cellRef].s.font = { bold: true, sz: 14 };
-                        ws[cellRef].s.alignment.horizontal = 'center';
                     }
-                    else if (R === 2) { // Título INFORMAÇÕES DA UNIDADE
+                    
+                    // Linha 2 - Título INFORMAÇÕES DA UNIDADE
+                    if (R === 2) {
                         ws[cellRef].s.font = { bold: true, sz: 12 };
                         ws[cellRef].s.alignment.horizontal = 'left';
                     }
-                    else if (R === 3 || R === 4) { // Linhas de informações
-                        if (C === 1 || C === 4) { // Valores (Carrefour, 27/02/2026, etc)
+                    
+                    // Linhas 3 e 4 - Informações da unidade
+                    if (R === 3 || R === 4) {
+                        if (C === 0 || C === 3) { // Labels (Rede:, Data:, etc)
+                            ws[cellRef].s.alignment.horizontal = 'right';
+                            ws[cellRef].s.font = { bold: false };
+                        } else if (C === 1 || C === 4) { // Valores
+                            ws[cellRef].s.alignment.horizontal = 'left';
                             ws[cellRef].s.font = { bold: true };
                         }
                     }
-                    else if (R === 6) { // Cabeçalho da tabela
-                        ws[cellRef].s.font = { bold: true, color: { rgb: 'FFFFFF' } };
-                        ws[cellRef].s.fill = { fgColor: { rgb: 'EE2E31' } }; // Vermelho Brastemp
+                    
+                    // Linha 6 - Cabeçalho da tabela
+                    if (R === 6) {
+                        ws[cellRef].s.font = { bold: true, color: { rgb: '000000' } };
+                        ws[cellRef].s.fill = { fgColor: { rgb: 'E7E6E6' } }; // Cinza claro
                     }
                     
-                    // Alinhar texto à esquerda para categoria e modelo
+                    // Colunas 0 e 1 (Categoria e Modelo) - alinhar à esquerda
                     if (C === 0 || C === 1) {
                         if (R > 6) { // Exceto cabeçalho
                             ws[cellRef].s.alignment.horizontal = 'left';
                         }
                     }
                     
-                    // Negrito para SUBTOTAL e TOTAL
-                    if (ws[cellRef].v && typeof ws[cellRef].v === 'string' && 
-                        (ws[cellRef].v.includes('SUBTOTAL') || ws[cellRef].v.includes('TOTAL'))) {
+                    // Linhas de SUBTOTAL - fundo azul claro
+                    if (typeof cellValue === 'string' && cellValue.includes('SUBTOTAL')) {
+                        ws[cellRef].s.font = { bold: true };
+                        ws[cellRef].s.fill = { fgColor: { rgb: 'DCE6F1' } }; // Azul claro
+                        
+                        // Mesclar células A e B para o subtotal
+                        if (R > 6 && C === 0) {
+                            // Merge será aplicado separadamente
+                        }
+                    }
+                    
+                    // Linhas de TOTAL GERAL - fundo cinza
+                    if (typeof cellValue === 'string' && cellValue.includes('TOTAL GERAL')) {
+                        ws[cellRef].s.font = { bold: true };
+                        ws[cellRef].s.fill = { fgColor: { rgb: 'BFBFBF' } }; // Cinza
+                    }
+                    
+                    // Linhas de Quantidade Total e Indisponíveis
+                    if (R > 20 && (cellValue === 'Quantidade Total:' || cellValue === 'Indisponíveis:' || 
+                        cellValue === 'Total de SKUs:' || cellValue === 'Disponíveis:')) {
                         ws[cellRef].s.font = { bold: true };
                     }
                 }
             }
+            
+            // Adicionar merges para SUBTOTAL (A e B)
+            let rowIndex = 8; // Começar após cabeçalho
+            categoriasOrdem.forEach(cat => {
+                const itens = Object.values(selectedData).filter(p => p.category === cat);
+                if (itens.length > 0) {
+                    rowIndex += itens.length; // Pular linhas de produtos
+                    
+                    // Merge para SUBTOTAL (colunas A e B)
+                    ws['!merges'].push({ s: { r: rowIndex, c: 0 }, e: { r: rowIndex, c: 1 } });
+                    // Merge para IND (colunas D e E)
+                    ws['!merges'].push({ s: { r: rowIndex, c: 3 }, e: { r: rowIndex, c: 4 } });
+                    
+                    rowIndex += 2; // Pular linha de subtotal e linha em branco
+                }
+            });
             
             // Adicionar worksheet ao workbook
             XLSX.utils.book_append_sheet(wb, ws, 'Mix Brastemp');
