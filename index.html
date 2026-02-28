@@ -581,30 +581,30 @@
             return `${day}/${month}/${year}`;
         }
 
-        // Função para gerar Excel com layout IDÊNTICO à imagem usando xlsx-js-style
+        // FUNÇÃO CORRIGIDA - EXCEL ORGANIZADO IGUAL À IMAGEM
         function generateStyledExcel(inputs, selectedData) {
             // Criar workbook
             const wb = XLSX.utils.book_new();
             
-            // Dados da planilha com estilo
-            const wsData = [];
+            // Array de dados
+            const data = [];
             
-            // TÍTULO PRINCIPAL
-            wsData.push(['RELATÓRIO DE MIX E DISPONIBILIDADE - BRASTEMP/CONSUL']);
-            wsData.push([]);
+            // 1. TÍTULO PRINCIPAL
+            data.push(['RELATÓRIO DE MIX E DISPONIBILIDADE - BRASTEMP/CONSUL']);
+            data.push([]);
             
-            // INFORMAÇÕES DA UNIDADE
-            wsData.push(['INFORMAÇÕES DA UNIDADE']);
-            wsData.push(['Rede:', inputs.rede, '', 'Data da Visita:', inputs.data]);
-            wsData.push(['ID Loja:', inputs.id, '', 'Filial:', inputs.filial]);
-            wsData.push([]);
+            // 2. INFORMAÇÕES DA UNIDADE - FORMATO CORRETO
+            data.push(['INFORMAÇÕES DA UNIDADE']);
+            data.push(['Rede:', inputs.rede, '', 'Data da Visita:', inputs.data]);
+            data.push(['ID Loja:', inputs.id, '', 'Filial:', inputs.filial]);
+            data.push([]);
             
-            // CABEÇALHO DA TABELA
-            wsData.push(['CATEGORIA', 'MODELO', 'QTD DISPONÍVEL', 'STATUS', 'SITUAÇÃO']);
+            // 3. CABEÇALHO DA TABELA
+            data.push(['CATEGORIA', 'MODELO', 'QTD DISPONÍVEL', 'STATUS', 'SITUAÇÃO']);
             
-            // CATEGORIAS EM ORDEM
+            // 4. CATEGORIAS E PRODUTOS
             const categoriasOrdem = ["Geladeiras", "MWO", "Lavadora", "Fogão", "Outros"];
-            let primeiraCategoria = true;
+            let linhaCategoria = 6; // Controle para merges
             
             categoriasOrdem.forEach(cat => {
                 const itens = Object.values(selectedData)
@@ -612,19 +612,16 @@
                     .sort((a, b) => a.product.localeCompare(b.product));
                 
                 if (itens.length > 0) {
-                    // Adicionar linha em branco entre categorias (exceto primeira)
-                    if (!primeiraCategoria) {
-                        wsData.push([]);
-                    }
-                    primeiraCategoria = false;
+                    const inicioCat = data.length;
                     
-                    // Para cada item, mostrar categoria apenas no primeiro da categoria
+                    // Adicionar produtos da categoria
                     itens.forEach((item, index) => {
                         const status = item.indisponivel ? "INDISPONÍVEL" : "DISPONÍVEL";
                         const situacao = item.indisponivel ? "CRÍTICO" : (item.quantity < 2 ? "ATENÇÃO" : "OK");
                         
-                        wsData.push([
-                            index === 0 ? cat.toUpperCase() : '', // Categoria só no primeiro item
+                        // Mostrar categoria apenas no primeiro item
+                        data.push([
+                            index === 0 ? cat.toUpperCase() : '',
                             item.product,
                             item.indisponivel ? 0 : item.quantity,
                             status,
@@ -632,161 +629,177 @@
                         ]);
                     });
                     
-                    // Calcular subtotal da categoria
+                    // Subtotal da categoria
                     const subtotal = itens.reduce((sum, item) => sum + (item.indisponivel ? 0 : item.quantity), 0);
                     const totalItens = itens.length;
                     const indisponiveis = itens.filter(item => item.indisponivel).length;
                     
-                    wsData.push(['', 'SUBTOTAL DA CATEGORIA:', subtotal, `Total Itens: ${totalItens}`, `IND: ${indisponiveis}`]);
+                    data.push([
+                        'SUBTOTAL DA CATEGORIA:',
+                        '',
+                        subtotal,
+                        `Total Itens: ${totalItens}`,
+                        `IND: ${indisponiveis}`
+                    ]);
+                    
+                    // Linha em branco após cada categoria
+                    data.push([]);
                 }
             });
             
-            // TOTAL GERAL
+            // 5. TOTAL GERAL
             const totalGeral = Object.values(selectedData).reduce((sum, item) => sum + (item.indisponivel ? 0 : item.quantity), 0);
             const totalItensGeral = Object.keys(selectedData).length;
             const totalIndisponiveis = Object.values(selectedData).filter(item => item.indisponivel).length;
             
-            wsData.push([]);
-            wsData.push(['', '', 'TOTAL GERAL', '', '']);
-            wsData.push(['', 'Quantidade Total:', totalGeral, 'Total de SKUs:', totalItensGeral]);
-            wsData.push(['', 'Indisponíveis:', totalIndisponiveis, 'Disponíveis:', totalItensGeral - totalIndisponiveis]);
+            data.push(['', '', 'TOTAL GERAL', '', '']);
+            data.push(['', 'Quantidade Total:', totalGeral, 'Total de SKUs:', totalItensGeral]);
+            data.push(['', 'Indisponíveis:', totalIndisponiveis, 'Disponíveis:', totalItensGeral - totalIndisponiveis]);
+            data.push([]);
             
-            // OBSERVAÇÕES
-            wsData.push([]);
-            wsData.push(['OBSERVAÇÕES GERAIS:']);
-            wsData.push([inputs.obs]);
-            wsData.push([]);
-            wsData.push([`Relatório gerado em: ${new Date().toLocaleString('pt-BR')}`]);
+            // 6. OBSERVAÇÕES
+            data.push(['OBSERVAÇÕES GERAIS:']);
+            data.push([inputs.obs]);
+            data.push([]);
+            
+            // 7. DATA/HORA DO RELATÓRIO
+            const now = new Date();
+            const dataHora = now.toLocaleDateString('pt-BR') + ', ' + 
+                            now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            data.push([`Relatório gerado em: ${dataHora}`]);
             
             // Converter para worksheet
-            const ws = XLSX.utils.aoa_to_sheet(wsData);
+            const ws = XLSX.utils.aoa_to_sheet(data);
             
-            // DEFINIR LARGURAS DAS COLUNAS
+            // LARGURAS DAS COLUNAS
             ws['!cols'] = [
-                { wch: 18 }, // Categoria
-                { wch: 20 }, // Modelo
+                { wch: 20 }, // Categoria
+                { wch: 18 }, // Modelo
                 { wch: 15 }, // Quantidade
                 { wch: 15 }, // Status
                 { wch: 12 }  // Situação
             ];
             
-            // MESCLAR CÉLULAS PARA TÍTULOS
+            // MESCLAR CÉLULAS
             ws['!merges'] = [
                 { s: { r: 0, c: 0 }, e: { r: 0, c: 4 } }, // Título principal
-                { s: { r: 2, c: 0 }, e: { r: 2, c: 4 } }, // Título INFORMAÇÕES DA UNIDADE
+                { s: { r: 2, c: 0 }, e: { r: 2, c: 4 } }  // INFORMAÇÕES DA UNIDADE
             ];
             
-            // APLICAR ESTILOS USANDO XLSX-JS-STYLE
-            // Estilo base com bordas
-            const borderStyle = {
+            // Mesclar células para subtotais
+            let linhaAtual = 6; // Começar após cabeçalho
+            
+            categoriasOrdem.forEach(cat => {
+                const itens = Object.values(selectedData).filter(p => p.category === cat);
+                if (itens.length > 0) {
+                    const linhaSubtotal = linhaAtual + itens.length;
+                    
+                    // Mesclar A e B no subtotal
+                    ws['!merges'].push({ s: { r: linhaSubtotal, c: 0 }, e: { r: linhaSubtotal, c: 1 } });
+                    
+                    linhaAtual = linhaSubtotal + 2; // +1 subtotal, +1 linha em branco
+                }
+            });
+            
+            // ESTILOS
+            const borderAll = {
                 top: { style: 'thin', color: { rgb: '000000' } },
                 bottom: { style: 'thin', color: { rgb: '000000' } },
                 left: { style: 'thin', color: { rgb: '000000' } },
                 right: { style: 'thin', color: { rgb: '000000' } }
             };
             
-            // Percorrer todas as células para aplicar estilos
+            // Aplicar estilos célula por célula
             const range = XLSX.utils.decode_range(ws['!ref']);
             
             for (let R = range.s.r; R <= range.e.r; R++) {
                 for (let C = range.s.c; C <= range.e.c; C++) {
                     const cellRef = XLSX.utils.encode_cell({ r: R, c: C });
                     
-                    // Se a célula não existe, criar vazia
                     if (!ws[cellRef]) {
                         ws[cellRef] = { t: 's', v: '' };
                     }
                     
-                    // Inicializar estilo se não existir
+                    // Inicializar estilo
                     if (!ws[cellRef].s) ws[cellRef].s = {};
                     
-                    // APLICAR BORDAS EM TODAS AS CÉLULAS
-                    ws[cellRef].s.border = borderStyle;
+                    // BORDAS (exceto linhas totalmente vazias)
+                    if (ws[cellRef].v !== '' || (R > 0 && ws[`${XLSX.utils.encode_cell({ r: R-1, c: C })}`]?.v !== '')) {
+                        ws[cellRef].s.border = borderAll;
+                    }
                     
-                    // ALINHAMENTO PADRÃO (CENTRALIZADO)
+                    // ALINHAMENTO
                     ws[cellRef].s.alignment = {
-                        horizontal: 'center',
-                        vertical: 'center'
+                        vertical: 'center',
+                        wrapText: true
                     };
                     
-                    // ESTILOS ESPECÍFICOS BASEADOS NA LINHA E CONTEÚDO
-                    const cellValue = ws[cellRef].v;
+                    // Categoria e Modelo: alinhar à esquerda
+                    if (C === 0 || C === 1) {
+                        ws[cellRef].s.alignment.horizontal = 'left';
+                    } else {
+                        ws[cellRef].s.alignment.horizontal = 'center';
+                    }
                     
-                    // Linha 0 - Título principal
+                    // ESTILOS ESPECÍFICOS
+                    const valor = ws[cellRef].v;
+                    
+                    // Título principal
                     if (R === 0) {
                         ws[cellRef].s.font = { bold: true, sz: 14 };
+                        ws[cellRef].s.alignment.horizontal = 'center';
                     }
                     
-                    // Linha 2 - Título INFORMAÇÕES DA UNIDADE
+                    // INFORMAÇÕES DA UNIDADE (título)
                     if (R === 2) {
                         ws[cellRef].s.font = { bold: true, sz: 12 };
-                        ws[cellRef].s.alignment.horizontal = 'left';
                     }
                     
-                    // Linhas 3 e 4 - Informações da unidade
-                    if (R === 3 || R === 4) {
-                        if (C === 0 || C === 3) { // Labels (Rede:, Data:, etc)
-                            ws[cellRef].s.alignment.horizontal = 'right';
-                            ws[cellRef].s.font = { bold: false };
-                        } else if (C === 1 || C === 4) { // Valores
-                            ws[cellRef].s.alignment.horizontal = 'left';
-                            ws[cellRef].s.font = { bold: true };
-                        }
-                    }
+                    // Labels das informações (Rede:, ID Loja:, etc)
+                    if (R === 3 && C === 0) ws[cellRef].s.font = { bold: true };
+                    if (R === 3 && C === 3) ws[cellRef].s.font = { bold: true };
+                    if (R === 4 && C === 0) ws[cellRef].s.font = { bold: true };
+                    if (R === 4 && C === 3) ws[cellRef].s.font = { bold: true };
                     
-                    // Linha 6 - Cabeçalho da tabela
-                    if (R === 6) {
-                        ws[cellRef].s.font = { bold: true, color: { rgb: '000000' } };
+                    // Valores das informações (Carrefour, 11902, etc)
+                    if (R === 3 && C === 1) ws[cellRef].s.font = { bold: true };
+                    if (R === 3 && C === 4) ws[cellRef].s.font = { bold: true };
+                    if (R === 4 && C === 1) ws[cellRef].s.font = { bold: true };
+                    if (R === 4 && C === 4) ws[cellRef].s.font = { bold: true };
+                    
+                    // Cabeçalho da tabela (linha 5)
+                    if (R === 5) {
+                        ws[cellRef].s.font = { bold: true };
                         ws[cellRef].s.fill = { fgColor: { rgb: 'E7E6E6' } }; // Cinza claro
                     }
                     
-                    // Colunas 0 e 1 (Categoria e Modelo) - alinhar à esquerda
-                    if (C === 0 || C === 1) {
-                        if (R > 6) { // Exceto cabeçalho
-                            ws[cellRef].s.alignment.horizontal = 'left';
-                        }
-                    }
-                    
-                    // Linhas de SUBTOTAL - fundo azul claro
-                    if (typeof cellValue === 'string' && cellValue.includes('SUBTOTAL')) {
+                    // SUBTOTAL - fundo azul claro e negrito
+                    if (typeof valor === 'string' && valor.includes('SUBTOTAL')) {
                         ws[cellRef].s.font = { bold: true };
                         ws[cellRef].s.fill = { fgColor: { rgb: 'DCE6F1' } }; // Azul claro
-                        
-                        // Mesclar células A e B para o subtotal
-                        if (R > 6 && C === 0) {
-                            // Merge será aplicado separadamente
-                        }
                     }
                     
-                    // Linhas de TOTAL GERAL - fundo cinza
-                    if (typeof cellValue === 'string' && cellValue.includes('TOTAL GERAL')) {
+                    // TOTAL GERAL - fundo cinza e negrito
+                    if (typeof valor === 'string' && valor.includes('TOTAL GERAL')) {
                         ws[cellRef].s.font = { bold: true };
                         ws[cellRef].s.fill = { fgColor: { rgb: 'BFBFBF' } }; // Cinza
                     }
                     
                     // Linhas de Quantidade Total e Indisponíveis
-                    if (R > 20 && (cellValue === 'Quantidade Total:' || cellValue === 'Indisponíveis:' || 
-                        cellValue === 'Total de SKUs:' || cellValue === 'Disponíveis:')) {
+                    if (typeof valor === 'string' && 
+                        (valor.includes('Quantidade Total:') || 
+                         valor.includes('Indisponíveis:') ||
+                         valor.includes('Total de SKUs:') ||
+                         valor.includes('Disponíveis:'))) {
+                        ws[cellRef].s.font = { bold: true };
+                    }
+                    
+                    // OBSERVAÇÕES GERAIS
+                    if (typeof valor === 'string' && valor.includes('OBSERVAÇÕES GERAIS:')) {
                         ws[cellRef].s.font = { bold: true };
                     }
                 }
             }
-            
-            // Adicionar merges para SUBTOTAL (A e B)
-            let rowIndex = 8; // Começar após cabeçalho
-            categoriasOrdem.forEach(cat => {
-                const itens = Object.values(selectedData).filter(p => p.category === cat);
-                if (itens.length > 0) {
-                    rowIndex += itens.length; // Pular linhas de produtos
-                    
-                    // Merge para SUBTOTAL (colunas A e B)
-                    ws['!merges'].push({ s: { r: rowIndex, c: 0 }, e: { r: rowIndex, c: 1 } });
-                    // Merge para IND (colunas D e E)
-                    ws['!merges'].push({ s: { r: rowIndex, c: 3 }, e: { r: rowIndex, c: 4 } });
-                    
-                    rowIndex += 2; // Pular linha de subtotal e linha em branco
-                }
-            });
             
             // Adicionar worksheet ao workbook
             XLSX.utils.book_append_sheet(wb, ws, 'Mix Brastemp');
@@ -920,7 +933,7 @@
                 doc.save(`Mix_Brastemp_${inputs.rede || 'Loja'}.pdf`);
             };
             
-            // CONFIGURAÇÃO DO EXCEL COM LAYOUT EXATO DA IMAGEM
+            // EXCEL CORRIGIDO
             document.getElementById('generate-excel').onclick = () => {
                 const inputs = {
                     rede: document.getElementById('rede').value || "Não informada",
@@ -949,4 +962,4 @@
         });
     </script>
 </body>
-</html>
+    </html>
