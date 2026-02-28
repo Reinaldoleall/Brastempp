@@ -581,109 +581,99 @@
             return `${day}/${month}/${year}`;
         }
 
-        // FUNÇÃO NOVA - CONSTRÓI CADA CÉLULA COM ESTILO NO MOMENTO DA CRIAÇÃO
+        // FUNÇÃO DEFINITIVA - EXCEL IGUAL À IMAGEM
         function generateStyledExcel(inputs, selectedData) {
             // Criar workbook
             const wb = XLSX.utils.book_new();
             
-            // Array para armazenar as linhas (cada linha é um array de células)
+            // Array para armazenar as linhas
             const rows = [];
             
-            // ========== ESTILOS BASE ==========
-            const borderAll = {
+            // Estilo base com bordas
+            const borderStyle = {
                 top: { style: 'thin', color: { rgb: '000000' } },
                 bottom: { style: 'thin', color: { rgb: '000000' } },
                 left: { style: 'thin', color: { rgb: '000000' } },
                 right: { style: 'thin', color: { rgb: '000000' } }
             };
             
-            // Função helper para criar célula com estilo
-            function createCell(value, options = {}) {
-                const cell = {
+            // Função para criar célula
+            function cell(value, options = {}) {
+                const cellObj = {
                     t: typeof value === 'number' ? 'n' : 's',
                     v: value,
                     s: {
-                        border: borderAll,
+                        border: borderStyle,
                         alignment: {
                             vertical: 'center',
-                            horizontal: options.horizontal || 'center',
-                            wrapText: options.wrapText || false
+                            horizontal: options.align || 'center',
+                            wrapText: options.wrap || false
                         }
                     }
                 };
                 
                 if (options.bold) {
-                    cell.s.font = { bold: true };
+                    cellObj.s.font = { bold: true };
                 }
                 
                 if (options.fill) {
-                    cell.s.fill = { fgColor: { rgb: options.fill } };
+                    cellObj.s.fill = { fgColor: { rgb: options.fill } };
                 }
                 
                 if (options.fontSize) {
-                    if (!cell.s.font) cell.s.font = {};
-                    cell.s.font.sz = options.fontSize;
+                    if (!cellObj.s.font) cellObj.s.font = {};
+                    cellObj.s.font.sz = options.fontSize;
                 }
                 
-                return cell;
+                return cellObj;
             }
             
-            // ========== LINHA 0 - TÍTULO PRINCIPAL ==========
+            // LINHA 0 - TÍTULO PRINCIPAL
             rows.push([
-                createCell('RELATÓRIO DE MIX E DISPONIBILIDADE - BRASTEMP/CONSUL', {
-                    bold: true,
-                    fontSize: 14,
-                    horizontal: 'center'
-                }),
-                createCell(''),
-                createCell(''),
-                createCell(''),
-                createCell('')
+                cell('RELATÓRIO DE MIX E DISPONIBILIDADE - BRASTEMP/CONSUL', { bold: true, fontSize: 14, align: 'center' }),
+                cell(''), cell(''), cell(''), cell('')
             ]);
             
-            // ========== LINHA 1 - VAZIA ==========
-            rows.push([createCell(''), createCell(''), createCell(''), createCell(''), createCell('')]);
+            // LINHA 1 - VAZIA
+            rows.push([cell(''), cell(''), cell(''), cell(''), cell('')]);
             
-            // ========== LINHA 2 - INFORMAÇÕES DA UNIDADE ==========
+            // LINHA 2 - INFORMAÇÕES DA UNIDADE
             rows.push([
-                createCell('INFORMAÇÕES DA UNIDADE', { bold: true, fontSize: 12, horizontal: 'left' }),
-                createCell(''),
-                createCell(''),
-                createCell(''),
-                createCell('')
+                cell('INFORMAÇÕES DA UNIDADE', { bold: true, fontSize: 12, align: 'left' }),
+                cell(''), cell(''), cell(''), cell('')
             ]);
             
-            // ========== LINHA 3 - REDE E DATA ==========
+            // LINHA 3 - REDE E DATA (formato igual à imagem)
             rows.push([
-                createCell('Rede:', { bold: true, horizontal: 'right' }),
-                createCell(inputs.rede, { bold: true, horizontal: 'left' }),
-                createCell(''),
-                createCell('Data da Visita:', { bold: true, horizontal: 'right' }),
-                createCell(inputs.data, { bold: true, horizontal: 'left' })
+                cell('Rede:', { bold: true, align: 'right' }),
+                cell(inputs.rede, { bold: true, align: 'left' }),
+                cell(''),
+                cell('Data da Visita:', { bold: true, align: 'right' }),
+                cell(inputs.data, { bold: true, align: 'left' })
             ]);
             
-            // ========== LINHA 4 - ID E FILIAL ==========
+            // LINHA 4 - ID E FILIAL
             rows.push([
-                createCell('ID Loja:', { bold: true, horizontal: 'right' }),
-                createCell(inputs.id, { bold: true, horizontal: 'left' }),
-                createCell(''),
-                createCell('Filial:', { bold: true, horizontal: 'right' }),
-                createCell(inputs.filial, { bold: true, horizontal: 'left' })
+                cell('ID Loja:', { bold: true, align: 'right' }),
+                cell(inputs.id, { bold: true, align: 'left' }),
+                cell(''),
+                cell('Filial:', { bold: true, align: 'right' }),
+                cell(inputs.filial, { bold: true, align: 'left' })
             ]);
             
-            // ========== LINHA 5 - VAZIA ==========
-            rows.push([createCell(''), createCell(''), createCell(''), createCell(''), createCell('')]);
+            // LINHA 5 - VAZIA
+            rows.push([cell(''), cell(''), cell(''), cell(''), cell('')]);
             
-            // ========== LINHA 6 - CABEÇALHO DA TABELA ==========
+            // LINHA 6 - CABEÇALHO DA TABELA
             rows.push([
-                createCell('CATEGORIA', { bold: true, fill: 'E7E6E6' }),
-                createCell('MODELO', { bold: true, fill: 'E7E6E6' }),
-                createCell('QTD DISPONÍVEL', { bold: true, fill: 'E7E6E6' }),
-                createCell('STATUS', { bold: true, fill: 'E7E6E6' }),
-                createCell('SITUAÇÃO', { bold: true, fill: 'E7E6E6' })
+                cell('CATEGORIA', { bold: true, fill: 'F2F2F2' }),
+                cell('MODELO', { bold: true, fill: 'F2F2F2' }),
+                cell('QTD DISPONÍVEL', { bold: true, fill: 'F2F2F2' }),
+                cell('STATUS', { bold: true, fill: 'F2F2F2' }),
+                cell('SITUAÇÃO', { bold: true, fill: 'F2F2F2' })
             ]);
             
-            // ========== CATEGORIAS E PRODUTOS ==========
+            // CATEGORIAS
             const categoriasOrdem = ["Geladeiras", "MWO", "Lavadora", "Fogão", "Outros"];
             
             categoriasOrdem.forEach(cat => {
@@ -692,107 +682,98 @@
                     .sort((a, b) => a.product.localeCompare(b.product));
                 
                 if (itens.length > 0) {
-                    // PRODUTOS DA CATEGORIA
+                    // PRODUTOS
                     itens.forEach((item, index) => {
                         const status = item.indisponivel ? "INDISPONÍVEL" : "DISPONÍVEL";
                         const situacao = item.indisponivel ? "CRÍTICO" : (item.quantity < 2 ? "ATENÇÃO" : "OK");
                         
                         rows.push([
-                            createCell(index === 0 ? cat.toUpperCase() : '', { horizontal: 'left' }),
-                            createCell(item.product, { horizontal: 'left' }),
-                            createCell(item.indisponivel ? 0 : item.quantity, {}),
-                            createCell(status, {}),
-                            createCell(situacao, {})
+                            cell(index === 0 ? cat.toUpperCase() : '', { align: 'left' }),
+                            cell(item.product, { align: 'left' }),
+                            cell(item.indisponivel ? 0 : item.quantity),
+                            cell(status),
+                            cell(situacao)
                         ]);
                     });
                     
-                    // SUBTOTAL DA CATEGORIA
+                    // SUBTOTAL
                     const subtotal = itens.reduce((sum, item) => sum + (item.indisponivel ? 0 : item.quantity), 0);
                     const totalItens = itens.length;
                     const indisponiveis = itens.filter(item => item.indisponivel).length;
                     
                     rows.push([
-                        createCell('SUBTOTAL DA CATEGORIA:', { bold: true, fill: 'DCE6F1', horizontal: 'left' }),
-                        createCell('', { fill: 'DCE6F1' }),
-                        createCell(subtotal, { bold: true, fill: 'DCE6F1' }),
-                        createCell(`Total Itens: ${totalItens}`, { bold: true, fill: 'DCE6F1' }),
-                        createCell(`IND: ${indisponiveis}`, { bold: true, fill: 'DCE6F1' })
+                        cell('SUBTOTAL DA CATEGORIA:', { bold: true, align: 'left' }),
+                        cell(''),
+                        cell(subtotal, { bold: true }),
+                        cell(`Total Itens: ${totalItens}`, { bold: true }),
+                        cell(`IND: ${indisponiveis}`, { bold: true })
                     ]);
                     
                     // LINHA EM BRANCO APÓS CATEGORIA
-                    rows.push([createCell(''), createCell(''), createCell(''), createCell(''), createCell('')]);
+                    rows.push([cell(''), cell(''), cell(''), cell(''), cell('')]);
                 }
             });
             
-            // ========== TOTAL GERAL ==========
+            // TOTAL GERAL
             const totalGeral = Object.values(selectedData).reduce((sum, item) => sum + (item.indisponivel ? 0 : item.quantity), 0);
             const totalItensGeral = Object.keys(selectedData).length;
             const totalIndisponiveis = Object.values(selectedData).filter(item => item.indisponivel).length;
             
             rows.push([
-                createCell(''),
-                createCell(''),
-                createCell('TOTAL GERAL', { bold: true, fill: 'BFBFBF' }),
-                createCell(''),
-                createCell('')
+                cell(''),
+                cell(''),
+                cell('TOTAL GERAL', { bold: true }),
+                cell(''),
+                cell('')
             ]);
             
             rows.push([
-                createCell(''),
-                createCell('Quantidade Total:', { bold: true, horizontal: 'right' }),
-                createCell(totalGeral, { bold: true }),
-                createCell('Total de SKUs:', { bold: true, horizontal: 'right' }),
-                createCell(totalItensGeral, { bold: true })
+                cell(''),
+                cell('Quantidade Total:', { bold: true, align: 'right' }),
+                cell(totalGeral, { bold: true }),
+                cell('Total de SKUs:', { bold: true, align: 'right' }),
+                cell(totalItensGeral, { bold: true })
             ]);
             
             rows.push([
-                createCell(''),
-                createCell('Indisponíveis:', { bold: true, horizontal: 'right' }),
-                createCell(totalIndisponiveis, { bold: true }),
-                createCell('Disponíveis:', { bold: true, horizontal: 'right' }),
-                createCell(totalItensGeral - totalIndisponiveis, { bold: true })
+                cell(''),
+                cell('Indisponíveis:', { bold: true, align: 'right' }),
+                cell(totalIndisponiveis, { bold: true }),
+                cell('Disponíveis:', { bold: true, align: 'right' }),
+                cell(totalItensGeral - totalIndisponiveis, { bold: true })
             ]);
             
-            // ========== LINHA EM BRANCO ==========
-            rows.push([createCell(''), createCell(''), createCell(''), createCell(''), createCell('')]);
+            // LINHA EM BRANCO
+            rows.push([cell(''), cell(''), cell(''), cell(''), cell('')]);
             
-            // ========== OBSERVAÇÕES ==========
+            // OBSERVAÇÕES
             rows.push([
-                createCell('OBSERVAÇÕES GERAIS:', { bold: true, horizontal: 'left' }),
-                createCell(''),
-                createCell(''),
-                createCell(''),
-                createCell('')
+                cell('OBSERVAÇÕES GERAIS:', { bold: true, align: 'left' }),
+                cell(''), cell(''), cell(''), cell('')
             ]);
             
             rows.push([
-                createCell(inputs.obs, { horizontal: 'left', wrapText: true }),
-                createCell(''),
-                createCell(''),
-                createCell(''),
-                createCell('')
+                cell(inputs.obs, { align: 'left', wrap: true }),
+                cell(''), cell(''), cell(''), cell('')
             ]);
             
-            // ========== LINHA EM BRANCO ==========
-            rows.push([createCell(''), createCell(''), createCell(''), createCell(''), createCell('')]);
+            // LINHA EM BRANCO
+            rows.push([cell(''), cell(''), cell(''), cell(''), cell('')]);
             
-            // ========== DATA/HORA DO RELATÓRIO ==========
+            // DATA/HORA DO RELATÓRIO
             const now = new Date();
             const dataHora = now.toLocaleDateString('pt-BR') + ', ' + 
                             now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
             
             rows.push([
-                createCell(`Relatório gerado em: ${dataHora}`, { horizontal: 'left' }),
-                createCell(''),
-                createCell(''),
-                createCell(''),
-                createCell('')
+                cell(`Relatório gerado em: ${dataHora}`, { align: 'left' }),
+                cell(''), cell(''), cell(''), cell('')
             ]);
             
-            // ========== CONVERTER PARA WORKSHEET ==========
+            // CONVERTER PARA WORKSHEET
             const ws = XLSX.utils.aoa_to_sheet(rows.map(row => row.map(cell => cell.v)));
             
-            // APLICAR OS ESTILOS DE CADA CÉLULA
+            // APLICAR ESTILOS
             for (let R = 0; R < rows.length; R++) {
                 for (let C = 0; C < rows[R].length; C++) {
                     if (rows[R][C]) {
@@ -802,7 +783,7 @@
                 }
             }
             
-            // ========== MESCLAR CÉLULAS ==========
+            // MESCLAR CÉLULAS
             ws['!merges'] = [
                 { s: { r: 0, c: 0 }, e: { r: 0, c: 4 } }, // Título principal
                 { s: { r: 2, c: 0 }, e: { r: 2, c: 4 } }, // INFORMAÇÕES DA UNIDADE
@@ -815,11 +796,11 @@
                 if (itens.length > 0) {
                     const subtotalRow = rowIndex + itens.length;
                     ws['!merges'].push({ s: { r: subtotalRow, c: 0 }, e: { r: subtotalRow, c: 1 } });
-                    rowIndex = subtotalRow + 2; // +1 subtotal, +1 linha em branco
+                    rowIndex = subtotalRow + 2;
                 }
             });
             
-            // ========== LARGURAS DAS COLUNAS ==========
+            // LARGURAS DAS COLUNAS
             ws['!cols'] = [
                 { wch: 20 }, // Categoria
                 { wch: 18 }, // Modelo
@@ -828,7 +809,7 @@
                 { wch: 12 }  // Situação
             ];
             
-            // ========== SALVAR ARQUIVO ==========
+            // ADICIONAR AO WORKBOOK E SALVAR
             XLSX.utils.book_append_sheet(wb, ws, 'Mix Brastemp');
             const fileName = `Mix_Brastemp_${inputs.rede.replace(/\s+/g, '_')}_${inputs.data.replace(/\//g, '-')}.xlsx`;
             XLSX.writeFile(wb, fileName);
@@ -956,7 +937,7 @@
                 doc.save(`Mix_Brastemp_${inputs.rede || 'Loja'}.pdf`);
             };
             
-            // EXCEL - NOVA VERSÃO CORRIGIDA
+            // EXCEL - VERSÃO FINAL CORRIGIDA
             document.getElementById('generate-excel').onclick = () => {
                 const inputs = {
                     rede: document.getElementById('rede').value || "Não informada",
