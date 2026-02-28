@@ -156,6 +156,13 @@
     </style>
 </head>
 <body class="bg-gray-100 pb-24">
+  
+  <!-- Logo Carrefour -->
+<div class="fixed top-16 right-4 z-50 cursor-pointer" id="carrefour-logo">
+    <img src="./carrefour.png" 
+         alt="Carrefour" 
+         class="w-12 h-12 object-contain bg-white rounded-full shadow-lg p-1 hover:scale-110 transition-transform">
+</div>
 
     <!-- Toast Notification -->
     <div id="toast" class="toast-notification hidden"></div>
@@ -378,6 +385,11 @@
         
         // Data atual automática
         const today = new Date();
+        
+        // Abrir relatório do Carrefour
+document.getElementById('carrefour-logo').addEventListener('click', function() {
+    window.location.href = './carrefour.html'; // Substitua pela URL do seu relatório
+});
         document.getElementById('data').valueAsDate = today;
 
         // Lista de Produtos Base com CÓDIGOS (atualizada com mais produtos)
@@ -1472,4 +1484,4 @@
         });
     </script>
 </body>
-    </html>
+</html>
