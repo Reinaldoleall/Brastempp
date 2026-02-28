@@ -581,7 +581,7 @@
             return `${day}/${month}/${year}`;
         }
 
-        // FUNÇÃO DEFINITIVA - EXCEL IGUAL À IMAGEM
+        // FUNÇÃO CORRIGIDA - TUDO CENTRALIZADO (exceto observações)
         function generateStyledExcel(inputs, selectedData) {
             // Criar workbook
             const wb = XLSX.utils.book_new();
@@ -597,7 +597,7 @@
                 right: { style: 'thin', color: { rgb: '000000' } }
             };
             
-            // Função para criar célula
+            // Função para criar célula - ALINHAMENTO PADRÃO = CENTRO
             function cell(value, options = {}) {
                 const cellObj = {
                     t: typeof value === 'number' ? 'n' : 's',
@@ -606,7 +606,7 @@
                         border: borderStyle,
                         alignment: {
                             vertical: 'center',
-                            horizontal: options.align || 'center',
+                            horizontal: options.align || 'center', // PADRÃO É CENTRO
                             wrapText: options.wrap || false
                         }
                     }
@@ -628,7 +628,7 @@
                 return cellObj;
             }
             
-            // LINHA 0 - TÍTULO PRINCIPAL
+            // LINHA 0 - TÍTULO PRINCIPAL (centralizado)
             rows.push([
                 cell('RELATÓRIO DE MIX E DISPONIBILIDADE - BRASTEMP/CONSUL', { bold: true, fontSize: 14, align: 'center' }),
                 cell(''), cell(''), cell(''), cell('')
@@ -637,34 +637,34 @@
             // LINHA 1 - VAZIA
             rows.push([cell(''), cell(''), cell(''), cell(''), cell('')]);
             
-            // LINHA 2 - INFORMAÇÕES DA UNIDADE
+            // LINHA 2 - INFORMAÇÕES DA UNIDADE (centralizado)
             rows.push([
-                cell('INFORMAÇÕES DA UNIDADE', { bold: true, fontSize: 12, align: 'left' }),
+                cell('INFORMAÇÕES DA UNIDADE', { bold: true, fontSize: 12, align: 'center' }),
                 cell(''), cell(''), cell(''), cell('')
             ]);
             
-            // LINHA 3 - REDE E DATA (formato igual à imagem)
+            // LINHA 3 - REDE E DATA (TUDO CENTRALIZADO)
             rows.push([
-                cell('Rede:', { bold: true, align: 'right' }),
-                cell(inputs.rede, { bold: true, align: 'left' }),
+                cell('Rede:', { bold: true }),
+                cell(inputs.rede, { bold: true }),
                 cell(''),
-                cell('Data da Visita:', { bold: true, align: 'right' }),
-                cell(inputs.data, { bold: true, align: 'left' })
+                cell('Data da Visita:', { bold: true }),
+                cell(inputs.data, { bold: true })
             ]);
             
-            // LINHA 4 - ID E FILIAL
+            // LINHA 4 - ID E FILIAL (TUDO CENTRALIZADO)
             rows.push([
-                cell('ID Loja:', { bold: true, align: 'right' }),
-                cell(inputs.id, { bold: true, align: 'left' }),
+                cell('ID Loja:', { bold: true }),
+                cell(inputs.id, { bold: true }),
                 cell(''),
-                cell('Filial:', { bold: true, align: 'right' }),
-                cell(inputs.filial, { bold: true, align: 'left' })
+                cell('Filial:', { bold: true }),
+                cell(inputs.filial, { bold: true })
             ]);
             
             // LINHA 5 - VAZIA
             rows.push([cell(''), cell(''), cell(''), cell(''), cell('')]);
             
-            // LINHA 6 - CABEÇALHO DA TABELA
+            // LINHA 6 - CABEÇALHO DA TABELA (centralizado)
             rows.push([
                 cell('CATEGORIA', { bold: true, fill: 'F2F2F2' }),
                 cell('MODELO', { bold: true, fill: 'F2F2F2' }),
@@ -682,27 +682,27 @@
                     .sort((a, b) => a.product.localeCompare(b.product));
                 
                 if (itens.length > 0) {
-                    // PRODUTOS
+                    // PRODUTOS - TUDO CENTRALIZADO
                     itens.forEach((item, index) => {
                         const status = item.indisponivel ? "INDISPONÍVEL" : "DISPONÍVEL";
                         const situacao = item.indisponivel ? "CRÍTICO" : (item.quantity < 2 ? "ATENÇÃO" : "OK");
                         
                         rows.push([
-                            cell(index === 0 ? cat.toUpperCase() : '', { align: 'left' }),
-                            cell(item.product, { align: 'left' }),
+                            cell(index === 0 ? cat.toUpperCase() : ''),
+                            cell(item.product),
                             cell(item.indisponivel ? 0 : item.quantity),
                             cell(status),
                             cell(situacao)
                         ]);
                     });
                     
-                    // SUBTOTAL
+                    // SUBTOTAL - TUDO CENTRALIZADO
                     const subtotal = itens.reduce((sum, item) => sum + (item.indisponivel ? 0 : item.quantity), 0);
                     const totalItens = itens.length;
                     const indisponiveis = itens.filter(item => item.indisponivel).length;
                     
                     rows.push([
-                        cell('SUBTOTAL DA CATEGORIA:', { bold: true, align: 'left' }),
+                        cell('SUBTOTAL DA CATEGORIA:', { bold: true }),
                         cell(''),
                         cell(subtotal, { bold: true }),
                         cell(`Total Itens: ${totalItens}`, { bold: true }),
@@ -714,7 +714,7 @@
                 }
             });
             
-            // TOTAL GERAL
+            // TOTAL GERAL - TUDO CENTRALIZADO
             const totalGeral = Object.values(selectedData).reduce((sum, item) => sum + (item.indisponivel ? 0 : item.quantity), 0);
             const totalItensGeral = Object.keys(selectedData).length;
             const totalIndisponiveis = Object.values(selectedData).filter(item => item.indisponivel).length;
@@ -729,24 +729,24 @@
             
             rows.push([
                 cell(''),
-                cell('Quantidade Total:', { bold: true, align: 'right' }),
+                cell('Quantidade Total:', { bold: true }),
                 cell(totalGeral, { bold: true }),
-                cell('Total de SKUs:', { bold: true, align: 'right' }),
+                cell('Total de SKUs:', { bold: true }),
                 cell(totalItensGeral, { bold: true })
             ]);
             
             rows.push([
                 cell(''),
-                cell('Indisponíveis:', { bold: true, align: 'right' }),
+                cell('Indisponíveis:', { bold: true }),
                 cell(totalIndisponiveis, { bold: true }),
-                cell('Disponíveis:', { bold: true, align: 'right' }),
+                cell('Disponíveis:', { bold: true }),
                 cell(totalItensGeral - totalIndisponiveis, { bold: true })
             ]);
             
             // LINHA EM BRANCO
             rows.push([cell(''), cell(''), cell(''), cell(''), cell('')]);
             
-            // OBSERVAÇÕES
+            // OBSERVAÇÕES (ÚNICA COISA ALINHADA À ESQUERDA)
             rows.push([
                 cell('OBSERVAÇÕES GERAIS:', { bold: true, align: 'left' }),
                 cell(''), cell(''), cell(''), cell('')
@@ -760,13 +760,13 @@
             // LINHA EM BRANCO
             rows.push([cell(''), cell(''), cell(''), cell(''), cell('')]);
             
-            // DATA/HORA DO RELATÓRIO
+            // DATA/HORA DO RELATÓRIO (centralizado)
             const now = new Date();
             const dataHora = now.toLocaleDateString('pt-BR') + ', ' + 
                             now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
             
             rows.push([
-                cell(`Relatório gerado em: ${dataHora}`, { align: 'left' }),
+                cell(`Relatório gerado em: ${dataHora}`),
                 cell(''), cell(''), cell(''), cell('')
             ]);
             
@@ -937,7 +937,7 @@
                 doc.save(`Mix_Brastemp_${inputs.rede || 'Loja'}.pdf`);
             };
             
-            // EXCEL - VERSÃO FINAL CORRIGIDA
+            // EXCEL - VERSÃO FINAL COM TUDO CENTRALIZADO
             document.getElementById('generate-excel').onclick = () => {
                 const inputs = {
                     rede: document.getElementById('rede').value || "Não informada",
@@ -966,4 +966,4 @@
         });
     </script>
 </body>
-</html>
+                    </html>
