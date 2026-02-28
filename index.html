@@ -147,6 +147,9 @@
             <h3 class="text-lg font-bold text-gray-800 mb-4" id="modal-product-name">Produto</h3>
             <p class="text-sm text-gray-500 mb-4" id="modal-product-category">Categoria</p>
             
+            <p class="text-xs text-gray-500 uppercase tracking-wider">Código do Produto</p>
+<p id="modal-product-code" class="text-lg font-bold text-[#EE2E31] mb-4"></p>
+            
             <div class="flex gap-2 mb-4">
                 <button id="set-indisponivel" class="flex-1 bg-gray-600 text-white font-bold py-3 rounded-xl hover:bg-gray-700 transition shadow-lg">
                     <i class="fas fa-times-circle mr-1"></i> IND
@@ -517,6 +520,8 @@
             
             document.getElementById('modal-product-name').textContent = product;
             document.getElementById('modal-product-category').textContent = `Categoria: ${category}`;
+            
+            document.getElementById('modal-product-code').textContent = btn.dataset.codigo || "SEM CÓDIGO";
             
             if (currentData.indisponivel) {
                 document.getElementById('product-quantity').value = 0;
