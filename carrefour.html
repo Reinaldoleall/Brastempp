@@ -1,0 +1,1487 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#EE2E31"> 
+    <title>Checklist Mix Brastemp</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+
+    <style>
+        body { font-family: 'Roboto', sans-serif; -webkit-tap-highlight-color: transparent; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        .product-item {
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+        .product-item.selected {
+            background-color: #EE2E31;
+            color: white;
+            border-color: #EE2E31;
+            box-shadow: 0 4px 6px -1px rgba(238, 46, 49, 0.3);
+        }
+        .product-item.selected i {
+            color: white;
+        }
+        .product-item.indisponivel {
+            background-color: #6B7280;
+            color: white;
+            border-color: #6B7280;
+        }
+        .product-item.indisponivel i {
+            color: white;
+        }
+        
+        .quantity-modal {
+            position: fixed;
+            inset: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 100;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(4px);
+        }
+        .quantity-modal.active {
+            display: flex;
+        }
+        .quantity-card {
+            background: white;
+            border-radius: 1.5rem;
+            padding: 1.5rem;
+            width: 90%;
+            max-width: 320px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2);
+            animation: slideUp 0.3s ease-out;
+        }
+        
+        .quantity-badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background-color: #EE2E31;
+            color: white;
+            border-radius: 9999px;
+            width: 20px;
+            height: 20px;
+            font-size: 11px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            border: 2px solid white;
+        }
+        .indisponivel-badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background-color: #6B7280;
+            color: white;
+            border-radius: 9999px;
+            width: 20px;
+            height: 20px;
+            font-size: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            border: 2px solid white;
+        }
+        
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in {
+            animation: fadeIn 0.3s ease-out forwards;
+        }
+
+        .btn-excel {
+            background-color: #1D6F42;
+            color: white;
+        }
+        .btn-excel:hover {
+            background-color: #155A32;
+        }
+
+        .add-product-btn {
+            position: fixed;
+            bottom: 90px;
+            right: 20px;
+            background-color: #EE2E31;
+            color: white;
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 10px rgba(238, 46, 49, 0.5);
+            cursor: pointer;
+            z-index: 45;
+            transition: transform 0.2s;
+        }
+        .add-product-btn:hover {
+            transform: scale(1.1);
+        }
+        .add-product-btn:active {
+            transform: scale(0.95);
+        }
+        .toast-notification {
+            position: fixed;
+            bottom: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #333;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 30px;
+            font-size: 14px;
+            font-weight: 500;
+            z-index: 200;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            animation: slideUp 0.3s ease-out;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 pb-24">
+  
+  <!-- Logo Carrefour -->
+<div class="fixed top-16 right-4 z-50 cursor-pointer" id="carrefour-logo">
+    <img src="viavarejo.png" 
+         alt="Carrefour" 
+         class="w-12 h-12 object-contain bg-white rounded-full shadow-lg p-1 hover:scale-110 transition-transform">
+</div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast-notification hidden"></div>
+
+    <!-- Modal de Quantidade -->
+    <div id="quantity-modal" class="quantity-modal">
+        <div class="quantity-card">
+            <h3 class="text-lg font-bold text-gray-800 mb-4" id="modal-product-name">Produto</h3>
+            <p class="text-sm text-gray-500 mb-4" id="modal-product-category">Categoria</p>
+            
+            <p class="text-xs text-gray-500 uppercase tracking-wider">Código do Produto</p>
+            <p id="modal-product-code" class="text-lg font-bold text-[#EE2E31] mb-4"></p>
+            
+            <div class="flex gap-2 mb-4">
+                <button id="set-indisponivel" class="flex-1 bg-gray-600 text-white font-bold py-3 rounded-xl hover:bg-gray-700 transition shadow-lg">
+                    <i class="fas fa-times-circle mr-1"></i> IND
+                </button>
+            </div>
+            
+            <p class="text-sm text-gray-500 mb-2">Quantidade disponível:</p>
+            <div class="flex items-center justify-between mb-6">
+                <button id="decrease-qty" class="w-12 h-12 rounded-full bg-gray-200 text-gray-600 text-2xl font-bold hover:bg-gray-300 transition flex items-center justify-center">−</button>
+                <input type="number" id="product-quantity" value="1" min="0" max="999" class="w-20 text-center text-2xl font-bold border-2 border-gray-200 rounded-xl p-2 focus:border-red-500 focus:outline-none">
+                <button id="increase-qty" class="w-12 h-12 rounded-full bg-gray-200 text-gray-600 text-2xl font-bold hover:bg-gray-300 transition flex items-center justify-center">+</button>
+            </div>
+            
+            <div class="flex gap-3">
+                <button id="cancel-quantity" class="flex-1 py-3 border-2 border-gray-300 text-gray-600 font-bold rounded-xl hover:bg-gray-100 transition">Cancelar</button>
+                <button id="confirm-quantity" class="flex-1 bg-[#EE2E31] text-white font-bold py-3 rounded-xl hover:bg-red-700 transition shadow-lg">Confirmar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Adicionar Produto -->
+    <div id="add-product-modal" class="fixed inset-0 bg-black bg-opacity-60 z-[70] hidden flex items-center justify-center backdrop-blur-sm">
+        <div class="bg-white w-full max-w-sm rounded-2xl shadow-2xl p-5">
+            <h3 class="text-lg font-bold text-gray-800 mb-4 flex items-center">
+                <i class="fas fa-plus-circle text-[#EE2E31] mr-2"></i> Adicionar Produto
+            </h3>
+            
+            <div class="space-y-4">
+                <div>
+                    <label class="text-xs text-gray-500 font-bold uppercase">Categoria</label>
+                    <select id="new-product-category" class="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-red-500 focus:outline-none">
+                        <option value="Geladeiras">Geladeiras</option>
+                        <option value="MWO">Microondas</option>
+                        <option value="Lavadora">Lavadora</option>
+                        <option value="Fogão">Fogão</option>
+                        <option value="Cooktop">Cooktop</option>
+                        <option value="Freezer">Freezer</option>
+                        <option value="Outros">Outros</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label class="text-xs text-gray-500 font-bold uppercase">Código do Produto</label>
+                    <input type="text" id="new-product-code" placeholder="Ex: BRM44HB" class="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-red-500 focus:outline-none">
+                </div>
+                
+                <div>
+                    <label class="text-xs text-gray-500 font-bold uppercase">Código SAP (opcional)</label>
+                    <input type="text" id="new-product-sap" placeholder="Ex: 4222342" class="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-red-500 focus:outline-none">
+                </div>
+                
+                <div>
+                    <label class="text-xs text-gray-500 font-bold uppercase">Quantidade Inicial</label>
+                    <input type="number" id="new-product-qty" value="1" min="0" class="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-red-500 focus:outline-none">
+                </div>
+            </div>
+            
+            <div class="flex gap-3 mt-6">
+                <button id="cancel-add-product" class="flex-1 py-3 border-2 border-gray-300 text-gray-600 font-bold rounded-xl hover:bg-gray-100 transition">Cancelar</button>
+                <button id="confirm-add-product" class="flex-1 bg-[#EE2E31] text-white font-bold py-3 rounded-xl hover:bg-red-700 transition shadow-lg">Adicionar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Edição de Quantidade -->
+    <div id="edit-quantity-modal" class="fixed inset-0 bg-black bg-opacity-60 z-[80] hidden flex items-center justify-center backdrop-blur-sm">
+        <div class="bg-white w-full max-w-sm rounded-2xl shadow-2xl p-5">
+            <h3 class="text-lg font-bold text-gray-800 mb-4 flex items-center">
+                <i class="fas fa-edit text-[#EE2E31] mr-2"></i> Editar Produto
+            </h3>
+            
+            <div id="edit-product-info" class="mb-4 p-3 bg-gray-50 rounded-xl">
+                <p id="edit-product-name" class="font-bold text-gray-800"></p>
+                <p id="edit-product-code" class="text-sm text-gray-600"></p>
+            </div>
+            
+            <p class="text-sm text-gray-500 mb-2">Nova quantidade:</p>
+            <div class="flex items-center justify-between mb-6">
+                <button id="edit-decrease-qty" class="w-12 h-12 rounded-full bg-gray-200 text-gray-600 text-2xl font-bold hover:bg-gray-300 transition flex items-center justify-center">−</button>
+                <input type="number" id="edit-product-quantity" value="1" min="0" max="999" class="w-20 text-center text-2xl font-bold border-2 border-gray-200 rounded-xl p-2 focus:border-red-500 focus:outline-none">
+                <button id="edit-increase-qty" class="w-12 h-12 rounded-full bg-gray-200 text-gray-600 text-2xl font-bold hover:bg-gray-300 transition flex items-center justify-center">+</button>
+            </div>
+            
+            <div class="flex gap-2 mb-3">
+                <button id="edit-set-indisponivel" class="flex-1 bg-gray-600 text-white font-bold py-3 rounded-xl hover:bg-gray-700 transition shadow-lg">
+                    <i class="fas fa-times-circle mr-1"></i> IND
+                </button>
+                <button id="edit-remove-product" class="flex-1 bg-red-600 text-white font-bold py-3 rounded-xl hover:bg-red-700 transition shadow-lg">
+                    <i class="fas fa-trash mr-1"></i> Remover
+                </button>
+            </div>
+            
+            <div class="flex gap-3">
+                <button id="cancel-edit" class="flex-1 py-3 border-2 border-gray-300 text-gray-600 font-bold rounded-xl hover:bg-gray-100 transition">Cancelar</button>
+                <button id="confirm-edit" class="flex-1 bg-[#EE2E31] text-white font-bold py-3 rounded-xl hover:bg-red-700 transition shadow-lg">Atualizar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Header -->
+    <header class="bg-[#EE2E31] text-white p-4 sticky top-0 z-50 shadow-md flex justify-between items-center">
+        <div class="flex items-center gap-2">
+            <i class="fas fa-clipboard-check"></i>
+            <h1 class="text-lg font-bold tracking-wide">Mix Brastemp</h1>
+        </div>
+        <div class="flex gap-2">
+            <button id="export-excel" class="text-xs bg-green-700 hover:bg-green-800 px-3 py-1 rounded-full transition">
+                <i class="fas fa-file-excel mr-1"></i> Excel
+            </button>
+            <button id="export-pdf" class="text-xs bg-red-700 hover:bg-red-800 px-3 py-1 rounded-full transition">
+                <i class="fas fa-file-pdf mr-1"></i> PDF
+            </button>
+            <button id="reset-all" class="text-xs bg-red-700 hover:bg-red-800 border border-red-500 px-3 py-1 rounded-full transition">
+                <i class="fas fa-eraser mr-1"></i> Limpar
+            </button>
+        </div>
+    </header>
+
+    <!-- Botão flutuante para adicionar produto -->
+    <div id="add-product-float" class="add-product-btn">
+        <i class="fas fa-plus text-2xl"></i>
+    </div>
+
+    <div class="container mx-auto p-4 max-w-md">
+        
+        <!-- Info da Loja -->
+        <div class="bg-white p-4 rounded-2xl shadow-sm mb-4">
+            <h3 class="text-gray-400 text-xs font-bold uppercase tracking-wider mb-3 flex items-center">
+                <i class="fas fa-store mr-2"></i> Dados da Visita
+            </h3>
+            <div class="space-y-3">
+                <input type="text" id="rede" placeholder="Rede" class="w-full bg-gray-50 p-3 rounded-xl border-none focus:ring-2 focus:ring-red-500 text-gray-700 text-sm transition">
+                <div class="grid grid-cols-2 gap-3">
+                    <input type="text" id="id-rede" placeholder="ID Loja" class="w-full bg-gray-50 p-3 rounded-xl border-none focus:ring-2 focus:ring-red-500 text-gray-700 text-sm transition">
+                    <input type="text" id="filial" placeholder="Filial" class="w-full bg-gray-50 p-3 rounded-xl border-none focus:ring-2 focus:ring-red-500 text-gray-700 text-sm transition">
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="relative">
+                        <span class="absolute left-3 top-3 text-gray-400 text-xs">Data</span>
+                        <input type="date" id="data" class="w-full bg-gray-50 pt-6 pb-2 px-3 rounded-xl border-none focus:ring-2 focus:ring-red-500 text-gray-700 text-sm transition">
+                    </div>
+                    <input type="text" id="visitante" placeholder="Seu Nome" class="w-full bg-gray-50 p-3 rounded-xl border-none focus:ring-2 focus:ring-red-500 text-gray-700 text-sm transition">
+                </div>
+                <div>
+                    <textarea id="observacao" placeholder="Observações (ex: produtos de linha nova não encontrados)" rows="2" class="w-full bg-gray-50 p-3 rounded-xl border-none focus:ring-2 focus:ring-red-500 text-gray-700 text-sm transition"></textarea>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-red-50 border-l-4 border-red-500 p-3 rounded-r mb-4 shadow-sm">
+            <p class="text-red-800 text-xs font-bold uppercase tracking-wider mb-1">Instruções</p>
+            <h2 class="text-gray-800 text-sm">Toque nos produtos para adicionar quantidade ou marcar como IND (indisponível). Toque duas vezes para editar. Use o botão vermelho (+) para adicionar produtos novos.</h2>
+        </div>
+
+        <!-- Container de Produtos -->
+        <div id="products-container" class="space-y-4">
+            <!-- As categorias serão injetadas aqui -->
+        </div>
+        
+        <div class="h-8"></div>
+    </div>
+
+    <!-- Modal de Resultado -->
+    <div id="result-modal" class="fixed inset-0 bg-black bg-opacity-60 z-[60] hidden flex items-end sm:items-center justify-center backdrop-blur-sm">
+        <div class="bg-white w-full max-w-md sm:rounded-2xl rounded-t-2xl shadow-2xl transform transition-transform duration-300 max-h-[90vh] flex flex-col">
+            
+            <div class="p-4 border-b flex justify-between items-center bg-gray-50 rounded-t-2xl">
+                <h3 class="font-bold text-gray-800">Mix Gerado</h3>
+                <button id="close-modal" class="text-gray-500 hover:text-gray-700 bg-gray-200 rounded-full w-8 h-8 flex items-center justify-center">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+
+            <div class="p-4 overflow-y-auto no-scrollbar">
+                <h4 class="text-xs font-bold text-gray-400 uppercase mb-2">Prévia do Texto</h4>
+                <div id="text-preview" class="whitespace-pre-wrap text-xs bg-gray-50 text-gray-900 p-4 rounded-xl border border-gray-200 font-mono max-h-80 overflow-y-auto select-all"></div>
+            </div>
+
+            <div class="p-4 border-t bg-white flex gap-2">
+                <button id="generate-excel" class="flex-1 btn-excel text-white font-bold py-3 px-4 rounded-xl shadow-lg hover:bg-green-800 transition flex items-center justify-center gap-2">
+                    <i class="fas fa-file-excel"></i> Excel
+                </button>
+                <button id="generate-pdf" class="flex-1 bg-red-600 text-white font-bold py-3 px-4 rounded-xl shadow-lg hover:bg-red-700 transition flex items-center justify-center gap-2">
+                    <i class="fas fa-file-pdf"></i> PDF
+                </button>
+                <a id="whatsapp-link" href="#" target="_blank" class="flex-1 bg-green-600 text-white font-bold py-3 px-4 rounded-xl shadow-lg hover:bg-green-700 transition flex items-center justify-center gap-2">
+                    <i class="fab fa-whatsapp text-xl"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Botão Flutuante Inferior -->
+    <div class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] z-40">
+        <div class="max-w-md mx-auto">
+            <button id="generate-report" class="w-full bg-[#EE2E31] text-white font-bold py-3 rounded-xl shadow-lg hover:bg-red-700 active:scale-95 transition flex items-center justify-center gap-2">
+                <i class="fas fa-check-circle mr-2"></i> Visualizar Relatório
+            </button>
+        </div>
+    </div>
+
+    <script>
+        const { jsPDF } = window.jspdf;
+        
+        // Verificar se existe interface Android
+        const isAndroid = typeof Android !== 'undefined';
+        
+        // Data atual automática
+        const today = new Date();
+        
+        // Abrir relatório do Carrefour
+document.getElementById('carrefour-logo').addEventListener('click', function() {
+    window.location.href = './index.html'; // Substitua pela URL do seu relatório
+});
+        document.getElementById('data').valueAsDate = today;
+
+        // Lista de Produtos Base com CÓDIGOS (atualizada com mais produtos)
+const baseCatalog = {
+    Geladeiras: [
+        // BRASTEMP
+        { modelo: "BRM55FB" },
+        { modelo: "BRM55FK" },
+        { modelo: "BRM55FE" },
+        { modelo: "BRM44HB" },
+        { modelo: "BRM44HK" },
+        { modelo: "BRM46MB" },
+        { modelo: "BRM46MK" },
+        { modelo: "BRE57FK" },
+        { modelo: "BRE57FB" },
+        { modelo: "BRE57FE" },
+        { modelo: "BRE85AB" },
+        { modelo: "BRE85AB" },
+        { modelo: "BRE85AK" },
+        { modelo: "BRE85AK" },
+        { modelo: "BRO85AE" },
+        { modelo: "BRE85MK" },
+        { modelo: "BRE85MK" },
+        { modelo: "BRO85ME" },
+        { modelo: "BRO85AK" },
+        { modelo: "BRO85AB" },
+        { modelo: "BRO90AK" },
+        { modelo: "BRM62AB" },
+        { modelo: "BRM62AK" },
+        { modelo: "BRM62AE" },
+        { modelo: "BRE66AB" },
+        { modelo: "BRE66AK" },
+        { modelo: "BRE66AE" },
+        { modelo: "BRM52MB" },
+        { modelo: "BRM52MK" },
+        // CONSUL
+        { modelo: "CRD37AE" },
+        { modelo: "CRM39AB" },
+        { modelo: "CRM39AK" },
+        { modelo: "CRM44AB" },
+        { modelo: "CRM44AK" },
+        { modelo: "CRM50LB" },
+        { modelo: "CRM50LK" },
+        { modelo: "CRM53FB" },
+        { modelo: "CRM53FK" },
+        { modelo: "CRM53MB" },
+        { modelo: "CRM53MK" },
+        { modelo: "CRM44MK" },
+        { modelo: "CRM44MB" },
+        { modelo: "CRM40MB" },
+        { modelo: "CRM40MB" }
+    ],
+    Lavadora: [
+        // BRASTEMP
+        { modelo: "BWK13A9" },
+        { modelo: "BWK13AB" },
+        { modelo: "BWF15AB" },
+        { modelo: "BWT15A9" },
+        { modelo: "BWF18AB" },
+        { modelo: "BWY16A9" },
+        { modelo: "BWF14AB" },
+        { modelo: "BWJ14A9" },
+        // CONSUL
+        { modelo: "CWB09BB" },
+        { modelo: "CWH12BB" },
+        { modelo: "CWN15AB" },
+        { modelo: "CWN13AB" }
+    ],
+    Fogao: [
+        // BRASTEMP
+        { modelo: "BFO4VBR" },
+        { modelo: "BFO4EBB" },
+        { modelo: "BFO4NBB" },
+        { modelo: "BFO4NBR" },
+        { modelo: "BFO4VAE" },
+        { modelo: "BFS5VCE" },
+        { modelo: "BFS5NCR" },
+        { modelo: "BFS5NDB" },
+        { modelo: "BFS5XAR" },
+        { modelo: "BFS5LAP" },
+        // CONSUL
+        { modelo: "CFO4VBE" },
+        { modelo: "CFO4NAB" },
+        { modelo: "CFO4NAR" },
+        { modelo: "CFO4VAR" },
+        { modelo: "CFO4VCE" },
+        { modelo: "CFO4ZAB" },
+        { modelo: "CFO4ZAE" },
+        { modelo: "CFS5NAB" },
+        { modelo: "CFS5VAR" },
+        { modelo: "CFS5VAE" },
+        { modelo: "CFS5VBE" }
+    ],
+    Cooktop: [
+        // BRASTEMP
+        { modelo: "BDD86AP" },
+        { modelo: "BDD75BE" },
+        { modelo: "BDD61BE" },
+        { modelo: "BDS62AE" },
+        { modelo: "BDS85AE" },
+        { modelo: "BDD75AE" },
+        { modelo: "BDD75AE" },
+        { modelo: "BDD61AE" },
+        // CONSUL
+        { modelo: "CD075AE" },
+        { modelo: "CD060AE" },
+        { modelo: "CD075BE" },
+        { modelo: "CDS75AE" }
+    ],
+    MWO: [
+        // BRASTEMP
+        { modelo: "BMS46AB" },
+        { modelo: "BMS46AR" },
+        // CONSUL
+        { modelo: "CMS46AB" },
+        { modelo: "CMS45AB" },
+        { modelo: "CMO20BF" }
+    ],
+    Freezer: [
+        // CONSUL
+        { modelo: "CVU18MB" },
+        { modelo: "CVU20MB" },
+        { modelo: "CVU26MB" },
+        { modelo: "CVU30MB" },
+        { modelo: "CHA31FB" },
+        { modelo: "CHA14AB" },
+        { modelo: "CHB53EB" }
+    ],
+    Outros: []
+};
+
+        // Carregar produtos personalizados do localStorage
+        let customProducts = JSON.parse(localStorage.getItem('customProducts') || '{}');
+
+        // Mesclar catálogo base com produtos personalizados
+        function getFullCatalog() {
+            const fullCatalog = JSON.parse(JSON.stringify(baseCatalog));
+            
+            // Adicionar produtos personalizados
+            Object.entries(customProducts).forEach(([key, value]) => {
+                const [category, productCode] = key.split('-');
+                if (category && productCode) {
+                    if (!fullCatalog[category]) {
+                        fullCatalog[category] = [];
+                    }
+                    // Verificar se já existe
+                    const exists = fullCatalog[category].some(p => p.modelo === productCode);
+                    if (!exists) {
+                        fullCatalog[category].push({ 
+                            modelo: productCode, 
+                            codigo: value.codigo || "SEM CADASTRO" 
+                        });
+                    }
+                }
+            });
+            
+            return fullCatalog;
+        }
+
+        // Ícones por categoria
+        const icons = {
+            "Geladeiras": "fa-snowflake",
+            "Lavadora": "fa-tshirt",
+            "Fogão": "fa-fire",
+            "Cooktop": "fa-chevron-circle-right",
+            "MWO": "fa-box-open",
+            "Freezer": "fa-temperature-low",
+            "Outros": "fa-tag"
+        };
+
+        // Estado dos produtos
+        let selectedProducts = {};
+
+        // Variáveis para os modais
+        let currentProduct = null;
+        let currentCategory = null;
+        let currentButton = null;
+        let editingProductId = null;
+
+        // Função para mostrar toast
+        function showToast(message, duration = 3000) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.classList.remove('hidden');
+            
+            setTimeout(() => {
+                toast.classList.add('hidden');
+            }, duration);
+        }
+
+        // Função para renderizar o catálogo
+        function renderCatalog() {
+            const container = document.getElementById('products-container');
+            container.innerHTML = '';
+
+            const fullCatalog = getFullCatalog();
+            const categoriasOrdenadas = ["Geladeiras", "Lavadora", "Fogão", "Cooktop", "MWO", "Freezer", "Outros"];
+
+            for (const category of categoriasOrdenadas) {
+                const products = fullCatalog[category] || [];
+                if (products.length === 0 && category !== "Outros") continue;
+                
+                const section = document.createElement('div');
+                section.className = "bg-white p-4 rounded-2xl shadow-sm animate-fade-in";
+                
+                const header = document.createElement('h3');
+                header.className = "text-[#EE2E31] font-bold text-lg mb-3 flex items-center border-b pb-2";
+                header.innerHTML = `<i class="fas ${icons[category] || 'fa-tag'} mr-2 text-sm opacity-70"></i> ${category} (${products.length})`;
+                section.appendChild(header);
+
+                const grid = document.createElement('div');
+                grid.className = "grid grid-cols-2 sm:grid-cols-3 gap-2";
+
+                products.sort((a, b) => a.modelo.localeCompare(b.modelo)).forEach(prod => {
+                    const productId = `${category}-${prod.modelo}`;
+                    const btn = document.createElement('button');
+                    
+                    // Determinar classe baseada no estado
+                    let baseClass = "product-item text-left p-3 rounded-xl border border-gray-200 bg-gray-50 text-gray-600 text-xs sm:text-sm font-medium flex items-center justify-between group relative";
+                    
+                    if (selectedProducts[productId]) {
+                        if (selectedProducts[productId].indisponivel) {
+                            baseClass = baseClass.replace('product-item', 'product-item indisponivel');
+                        } else if (selectedProducts[productId].quantity > 0) {
+                            baseClass = baseClass.replace('product-item', 'product-item selected');
+                        }
+                    }
+                    
+                    btn.className = baseClass;
+                    btn.dataset.product = prod.modelo;
+                    btn.dataset.category = category;
+                    btn.dataset.codigo = prod.codigo || "SEM CÓDIGO";
+                    btn.dataset.productId = productId;
+                    
+                    // Determinar ícone e badge
+                    let icon = 'fa-plus-circle text-gray-300';
+                    let badge = '';
+                    
+                    if (selectedProducts[productId]) {
+                        if (selectedProducts[productId].indisponivel) {
+                            icon = 'fa-times-circle text-white';
+                            badge = `<span class="indisponivel-badge">IND</span>`;
+                        } else if (selectedProducts[productId].quantity > 0) {
+                            icon = 'fa-check-circle text-white';
+                            badge = `<span class="quantity-badge">${selectedProducts[productId].quantity}</span>`;
+                        }
+                    }
+                    
+                    btn.innerHTML = `
+                        <span class="truncate pr-2" title="${prod.modelo} (Cód: ${prod.codigo || 'SEM CÓDIGO'})">${prod.modelo}</span>
+                        <i class="fas ${icon} transition-colors"></i>
+                        ${badge}
+                    `;
+                    
+                    // Clique simples - abrir modal de quantidade
+                    btn.onclick = (e) => {
+                        e.preventDefault();
+                        openQuantityModal(btn, category, prod.modelo);
+                    };
+                    
+                    // Duplo clique - abrir modal de edição
+                    btn.ondblclick = (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        openEditModal(productId);
+                    };
+
+                    grid.appendChild(btn);
+                });
+
+                section.appendChild(grid);
+                container.appendChild(section);
+            }
+        }
+
+        // Abrir modal de edição
+        function openEditModal(productId) {
+            const product = selectedProducts[productId];
+            if (!product) return;
+            
+            editingProductId = productId;
+            
+            document.getElementById('edit-product-name').textContent = `${product.product} - ${product.category}`;
+            document.getElementById('edit-product-code').textContent = `Código: ${getProductCode(product.category, product.product)}`;
+            document.getElementById('edit-product-quantity').value = product.quantity || 0;
+            
+            document.getElementById('edit-quantity-modal').classList.remove('hidden');
+        }
+
+        // Abrir modal de quantidade
+        function openQuantityModal(btn, category, product) {
+            currentButton = btn;
+            currentCategory = category;
+            currentProduct = product;
+            
+            const productId = `${category}-${product}`;
+            const currentData = selectedProducts[productId] || {};
+            
+            document.getElementById('modal-product-name').textContent = product;
+            document.getElementById('modal-product-category').textContent = `Categoria: ${category}`;
+            
+            document.getElementById('modal-product-code').textContent = btn.dataset.codigo || "SEM CÓDIGO";
+            
+            if (currentData.indisponivel) {
+                document.getElementById('product-quantity').value = 0;
+            } else {
+                document.getElementById('product-quantity').value = currentData.quantity || 1;
+            }
+            
+            document.getElementById('quantity-modal').classList.add('active');
+        }
+
+        // Fechar modal de quantidade
+        function closeQuantityModal() {
+            document.getElementById('quantity-modal').classList.remove('active');
+            currentProduct = null;
+            currentCategory = null;
+            currentButton = null;
+        }
+
+        // Fechar modal de edição
+        function closeEditModal() {
+            document.getElementById('edit-quantity-modal').classList.add('hidden');
+            editingProductId = null;
+        }
+
+        // Marcar como indisponível
+        function setIndisponivel() {
+            if (currentProduct && currentCategory && currentButton) {
+                const productId = `${currentCategory}-${currentProduct}`;
+                
+                selectedProducts[productId] = {
+                    product: currentProduct,
+                    category: currentCategory,
+                    quantity: 0,
+                    indisponivel: true,
+                    codigo: currentButton.dataset.codigo
+                };
+                
+                // Atualizar visual
+                updateButtonVisual(currentButton, currentCategory, currentProduct, 0, true);
+                
+                // Salvar estado
+                saveState();
+            }
+            
+            closeQuantityModal();
+        }
+
+        // Atualizar visual do botão
+        function updateButtonVisual(btn, category, product, quantity, isIndisponivel = false) {
+            const productId = `${category}-${product}`;
+            
+            // Remover classes antigas
+            btn.classList.remove('selected', 'indisponivel');
+            
+            // Remover badge antigo
+            const oldBadge = btn.querySelector('.quantity-badge, .indisponivel-badge');
+            if (oldBadge) oldBadge.remove();
+            
+            if (isIndisponivel) {
+                btn.classList.add('indisponivel');
+                btn.querySelector('i').className = "fas fa-times-circle text-white";
+                
+                const badge = document.createElement('span');
+                badge.className = 'indisponivel-badge';
+                badge.textContent = 'IND';
+                btn.appendChild(badge);
+            } else if (quantity > 0) {
+                btn.classList.add('selected');
+                btn.querySelector('i').className = "fas fa-check-circle text-white";
+                
+                const badge = document.createElement('span');
+                badge.className = 'quantity-badge';
+                badge.textContent = quantity;
+                btn.appendChild(badge);
+            } else {
+                btn.classList.remove('selected', 'indisponivel');
+                btn.querySelector('i').className = "fas fa-plus-circle text-gray-300 transition-colors group-hover:text-red-300";
+            }
+        }
+
+        // Salvar estado no localStorage
+        function saveState() {
+            localStorage.setItem('selectedProducts', JSON.stringify(selectedProducts));
+        }
+
+        // Carregar estado do localStorage
+        function loadState() {
+            const saved = localStorage.getItem('selectedProducts');
+            if (saved) {
+                selectedProducts = JSON.parse(saved);
+            }
+        }
+
+        // Função para obter código do produto
+        function getProductCode(category, product) {
+            const fullCatalog = getFullCatalog();
+            const catProducts = fullCatalog[category] || [];
+            const found = catProducts.find(p => p.modelo === product);
+            return found && found.codigo ? found.codigo : "SEM CÓDIGO";
+        }
+
+        // Função para gerar texto do relatório
+        function generateTextReport(inputs, selectedData, observacao) {
+            let text = `*MIX BRASTEMP/CONSUL - RELATÓRIO COMPLETO*\n\n`;
+            text += `*Rede:* ${inputs.rede}\n`;
+            text += `*ID Loja:* ${inputs.id}\n`;
+            text += `*Filial:* ${inputs.filial}\n`;
+            text += `*Data:* ${inputs.data}\n`;
+            text += `*Visitante:* ${inputs.visitante}\n\n`;
+
+            text += `*PRODUTOS DISPONÍVEIS NO CD:*\n\n`;
+
+            const order = ["Geladeiras", "Lavadora", "Fogão", "Cooktop", "MWO", "Freezer", "Outros"];
+            let hasItems = false;
+
+            order.forEach(cat => {
+                const catProducts = Object.entries(selectedData)
+                    .filter(([key, value]) => key.startsWith(cat))
+                    .sort((a, b) => a[1].product.localeCompare(b[1].product));
+                
+                if (catProducts.length > 0) {
+                    hasItems = true;
+                    text += `*${cat.toUpperCase()}:*\n`;
+                    
+                    catProducts.forEach(([key, data]) => {
+                        const codigo = getProductCode(data.category, data.product);
+                        if (data.indisponivel) {
+                            text += `  •  ${data.product} (Cód: ${codigo}): 00 *(INDISPONÍVEL)*\n`;
+                        } else {
+                            const qtyStr = data.quantity.toString().padStart(2, '0');
+                            text += `  •  ${data.product} (Cód: ${codigo}): ${qtyStr} unidade(s)\n`;
+                        }
+                    });
+                    text += `\n`;
+                }
+            });
+
+            if (!hasItems) {
+                text += "_Nenhum produto selecionado._\n\n";
+            }
+
+            // Totais
+            const totalItens = Object.keys(selectedData).length;
+            const totalIndisponiveis = Object.values(selectedData).filter(item => item.indisponivel).length;
+            const totalDisponiveis = totalItens - totalIndisponiveis;
+            const totalQuantidade = Object.values(selectedData).reduce((sum, item) => sum + (item.indisponivel ? 0 : item.quantity), 0);
+
+            text += `*RESUMO:*\n`;
+            text += `  • Total de SKUs: ${totalItens}\n`;
+            text += `  • Disponíveis: ${totalDisponiveis}\n`;
+            text += `  • Indisponíveis (IND): ${totalIndisponiveis}\n`;
+            text += `  • Quantidade total em estoque: ${totalQuantidade} unidades\n\n`;
+
+            text += `*OBSERVAÇÕES:*\n`;
+            text += observacao && observacao.trim() !== '' ? observacao : "Sem observações adicionais.";
+
+            return text;
+        }
+
+        // Função para formatar data
+        function formatDate(dateStr) {
+            if (!dateStr) return "";
+            const [year, month, day] = dateStr.split('-');
+            return `${day}/${month}/${year}`;
+        }
+
+        // Função para exportar Excel
+        function generateStyledExcel() {
+            const inputs = {
+                rede: document.getElementById('rede').value || "Não informada",
+                id: document.getElementById('id-rede').value || "-",
+                filial: document.getElementById('filial').value || "-",
+                data: formatDate(document.getElementById('data').value),
+                visitante: document.getElementById('visitante').value || "-",
+                obs: document.getElementById('observacao').value || "Sem observações adicionais."
+            };
+            
+            // Criar workbook
+            const wb = XLSX.utils.book_new();
+            
+            // Array para armazenar as linhas
+            const rows = [];
+            
+            // Estilo base com bordas
+            const borderStyle = {
+                top: { style: 'thin', color: { rgb: '000000' } },
+                bottom: { style: 'thin', color: { rgb: '000000' } },
+                left: { style: 'thin', color: { rgb: '000000' } },
+                right: { style: 'thin', color: { rgb: '000000' } }
+            };
+            
+            // Função para criar célula
+            function cell(value, options = {}) {
+                const cellObj = {
+                    t: typeof value === 'number' ? 'n' : 's',
+                    v: value,
+                    s: {
+                        border: borderStyle,
+                        alignment: {
+                            vertical: 'center',
+                            horizontal: options.align || 'center',
+                            wrapText: options.wrap || false
+                        }
+                    }
+                };
+                
+                if (options.bold) {
+                    cellObj.s.font = { bold: true };
+                }
+                
+                if (options.fill) {
+                    cellObj.s.fill = { fgColor: { rgb: options.fill } };
+                }
+                
+                if (options.fontSize) {
+                    if (!cellObj.s.font) cellObj.s.font = {};
+                    cellObj.s.font.sz = options.fontSize;
+                }
+                
+                return cellObj;
+            }
+            
+            // TÍTULO PRINCIPAL
+            rows.push([
+                cell('RELATÓRIO DE MIX E DISPONIBILIDADE - BRASTEMP/CONSUL', { bold: true, fontSize: 14, align: 'center' }),
+                cell(''), cell(''), cell(''), cell(''), cell(''), cell('')
+            ]);
+            
+            // LINHA VAZIA
+            rows.push([cell(''), cell(''), cell(''), cell(''), cell(''), cell(''), cell('')]);
+            
+            // INFORMAÇÕES DA UNIDADE
+            rows.push([
+                cell('INFORMAÇÕES DA UNIDADE', { bold: true, fontSize: 12, align: 'center' }),
+                cell(''), cell(''), cell(''), cell(''), cell(''), cell('')
+            ]);
+            
+            // REDE, DATA E VISITANTE
+            rows.push([
+                cell('Rede:', { bold: true }),
+                cell(inputs.rede, { bold: true }),
+                cell(''),
+                cell('Data da Visita:', { bold: true }),
+                cell(inputs.data, { bold: true }),
+                cell(''),
+                cell('')
+            ]);
+            
+            // ID, FILIAL
+            rows.push([
+                cell('ID Loja:', { bold: true }),
+                cell(inputs.id, { bold: true }),
+                cell(''),
+                cell('Filial:', { bold: true }),
+                cell(inputs.filial, { bold: true }),
+                cell(''),
+                cell('')
+            ]);
+            
+            // VISITANTE
+            rows.push([
+                cell('Visitante:', { bold: true }),
+                cell(inputs.visitante, { bold: true }),
+                cell(''), cell(''), cell(''), cell(''), cell('')
+            ]);
+            
+            // LINHA VAZIA
+            rows.push([cell(''), cell(''), cell(''), cell(''), cell(''), cell(''), cell('')]);
+            
+            // CABEÇALHO DA TABELA
+            rows.push([
+                cell('CATEGORIA', { bold: true, fill: 'F2F2F2' }),
+                cell('MODELO', { bold: true, fill: 'F2F2F2' }),
+                cell('CÓDIGO SAP', { bold: true, fill: 'F2F2F2' }),
+                cell('QTD', { bold: true, fill: 'F2F2F2' }),
+                cell('STATUS', { bold: true, fill: 'F2F2F2' }),
+                cell('SITUAÇÃO', { bold: true, fill: 'F2F2F2' }),
+                cell('OBS', { bold: true, fill: 'F2F2F2' })
+            ]);
+            
+            // CATEGORIAS
+            const categoriasOrdem = ["Geladeiras", "Lavadora", "Fogão", "Cooktop", "MWO", "Freezer", "Outros"];
+            
+            categoriasOrdem.forEach(cat => {
+                const itens = Object.values(selectedProducts)
+                    .filter(p => p.category === cat)
+                    .sort((a, b) => a.product.localeCompare(b.product));
+                
+                if (itens.length > 0) {
+                    // PRODUTOS
+                    itens.forEach((item, index) => {
+                        const status = item.indisponivel ? "INDISPONÍVEL" : "DISPONÍVEL";
+                        const situacao = item.indisponivel ? "CRÍTICO" : (item.quantity < 2 ? "ATENÇÃO" : "OK");
+                        const codigo = getProductCode(item.category, item.product);
+                        
+                        rows.push([
+                            cell(index === 0 ? cat.toUpperCase() : ''),
+                            cell(item.product),
+                            cell(codigo),
+                            cell(item.indisponivel ? 0 : item.quantity),
+                            cell(status),
+                            cell(situacao),
+                            cell('')
+                        ]);
+                    });
+                    
+                    // SUBTOTAL
+                    const subtotal = itens.reduce((sum, item) => sum + (item.indisponivel ? 0 : item.quantity), 0);
+                    const totalItens = itens.length;
+                    const indisponiveis = itens.filter(item => item.indisponivel).length;
+                    
+                    rows.push([
+                        cell('SUBTOTAL DA CATEGORIA:', { bold: true }),
+                        cell(''),
+                        cell(''),
+                        cell(subtotal, { bold: true }),
+                        cell(`Total Itens: ${totalItens}`, { bold: true }),
+                        cell(`IND: ${indisponiveis}`, { bold: true }),
+                        cell('')
+                    ]);
+                    
+                    // LINHA EM BRANCO APÓS CATEGORIA
+                    rows.push([cell(''), cell(''), cell(''), cell(''), cell(''), cell(''), cell('')]);
+                }
+            });
+            
+            // TOTAL GERAL
+            const totalGeral = Object.values(selectedProducts).reduce((sum, item) => sum + (item.indisponivel ? 0 : item.quantity), 0);
+            const totalItensGeral = Object.keys(selectedProducts).length;
+            const totalIndisponiveis = Object.values(selectedProducts).filter(item => item.indisponivel).length;
+            
+            rows.push([
+                cell('RESUMO GERAL', { bold: true, fontSize: 12 }),
+                cell(''), cell(''), cell(''), cell(''), cell(''), cell('')
+            ]);
+            
+            rows.push([
+                cell('Quantidade Total:', { bold: true }),
+                cell(totalGeral, { bold: true }),
+                cell(''),
+                cell('Total de SKUs:', { bold: true }),
+                cell(totalItensGeral, { bold: true }),
+                cell(''),
+                cell('')
+            ]);
+            
+            rows.push([
+                cell('Indisponíveis:', { bold: true }),
+                cell(totalIndisponiveis, { bold: true }),
+                cell(''),
+                cell('Disponíveis:', { bold: true }),
+                cell(totalItensGeral - totalIndisponiveis, { bold: true }),
+                cell(''),
+                cell('')
+            ]);
+            
+            // LINHA EM BRANCO
+            rows.push([cell(''), cell(''), cell(''), cell(''), cell(''), cell(''), cell('')]);
+            
+            // OBSERVAÇÕES
+            rows.push([
+                cell('OBSERVAÇÕES GERAIS:', { bold: true, align: 'left' }),
+                cell(''), cell(''), cell(''), cell(''), cell(''), cell('')
+            ]);
+            
+            rows.push([
+                cell(inputs.obs, { align: 'left', wrap: true }),
+                cell(''), cell(''), cell(''), cell(''), cell(''), cell('')
+            ]);
+            
+            // LINHA EM BRANCO
+            rows.push([cell(''), cell(''), cell(''), cell(''), cell(''), cell(''), cell('')]);
+            
+            // DATA/HORA DO RELATÓRIO
+            const now = new Date();
+            const dataHora = now.toLocaleDateString('pt-BR') + ', ' + 
+                            now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            
+            rows.push([
+                cell(`Relatório gerado em: ${dataHora}`),
+                cell(''), cell(''), cell(''), cell(''), cell(''), cell('')
+            ]);
+            
+            // CONVERTER PARA WORKSHEET
+            const ws = XLSX.utils.aoa_to_sheet(rows.map(row => row.map(cell => cell.v)));
+            
+            // APLICAR ESTILOS
+            for (let R = 0; R < rows.length; R++) {
+                for (let C = 0; C < rows[R].length; C++) {
+                    if (rows[R][C]) {
+                        const cellRef = XLSX.utils.encode_cell({ r: R, c: C });
+                        ws[cellRef] = rows[R][C];
+                    }
+                }
+            }
+            
+            // MESCLAR CÉLULAS
+            ws['!merges'] = [
+                { s: { r: 0, c: 0 }, e: { r: 0, c: 6 } }, // Título principal
+                { s: { r: 2, c: 0 }, e: { r: 2, c: 6 } }, // INFORMAÇÕES DA UNIDADE
+            ];
+            
+            // LARGURAS DAS COLUNAS
+            ws['!cols'] = [
+                { wch: 20 }, // Categoria
+                { wch: 18 }, // Modelo
+                { wch: 15 }, // Código SAP
+                { wch: 10 }, // Quantidade
+                { wch: 15 }, // Status
+                { wch: 12 }, // Situação
+                { wch: 20 }  // Obs
+            ];
+            
+            // ADICIONAR AO WORKBOOK
+            XLSX.utils.book_append_sheet(wb, ws, 'Mix Brastemp');
+            
+            // Nome do arquivo
+            const fileName = `Mix_Brastemp_${inputs.rede.replace(/\s+/g, '_')}_${inputs.data.replace(/\//g, '-')}.xlsx`;
+            
+            // GERAR E BAIXAR
+            try {
+                XLSX.writeFile(wb, fileName);
+                showToast('Excel gerado com sucesso!');
+            } catch (error) {
+                console.error('Erro ao gerar Excel:', error);
+                showToast('Erro ao gerar Excel', 3000);
+            }
+            
+            // Fechar modal se estiver aberto
+            document.getElementById('result-modal').classList.add('hidden');
+        }
+
+        // Função para gerar PDF
+        function generatePDF() {
+            const inputs = {
+                rede: document.getElementById('rede').value || "-",
+                id: document.getElementById('id-rede').value || "-",
+                filial: document.getElementById('filial').value || "-",
+                data: formatDate(document.getElementById('data').value),
+                visitante: document.getElementById('visitante').value || "-"
+            };
+            
+            const observacao = document.getElementById('observacao').value || "Sem observações adicionais.";
+            
+            // Criar novo documento PDF
+            const doc = new jsPDF();
+            
+            // Título
+            doc.setFontSize(16);
+            doc.setTextColor(238, 46, 49);
+            doc.text('RELATÓRIO DE MIX - BRASTEMP/CONSUL', 15, 15);
+            
+            // Linha separadora
+            doc.setDrawColor(238, 46, 49);
+            doc.line(15, 20, 195, 20);
+            
+            // Informações da visita
+            doc.setFontSize(10);
+            doc.setTextColor(0, 0, 0);
+            doc.text(`Rede: ${inputs.rede}`, 15, 30);
+            doc.text(`ID Loja: ${inputs.id}`, 15, 35);
+            doc.text(`Filial: ${inputs.filial}`, 15, 40);
+            doc.text(`Data: ${inputs.data}`, 15, 45);
+            doc.text(`Visitante: ${inputs.visitante}`, 15, 50);
+            
+            // Preparar dados para a tabela
+            const tableData = [];
+            const categoriasOrdem = ["Geladeiras", "Lavadora", "Fogão", "Cooktop", "MWO", "Freezer", "Outros"];
+            
+            categoriasOrdem.forEach(cat => {
+                const itens = Object.values(selectedProducts)
+                    .filter(p => p.category === cat && !p.indisponivel)
+                    .sort((a, b) => a.product.localeCompare(b.product));
+                
+                itens.forEach(item => {
+                    const codigo = getProductCode(item.category, item.product);
+                    tableData.push([cat, item.product, codigo, item.quantity]);
+                });
+            });
+            
+            // Adicionar indisponíveis
+            const indisponiveis = Object.values(selectedProducts).filter(p => p.indisponivel);
+            if (indisponiveis.length > 0) {
+                tableData.push(['INDISPONÍVEIS', '', '', '']);
+                indisponiveis.forEach(item => {
+                    const codigo = getProductCode(item.category, item.product);
+                    tableData.push([item.category, item.product, codigo, 'IND']);
+                });
+            }
+            
+            // Criar tabela
+            if (tableData.length > 0) {
+                doc.autoTable({
+                    startY: 60,
+                    head: [['Categoria', 'Modelo', 'Código SAP', 'Qtd']],
+                    body: tableData,
+                    theme: 'striped',
+                    headStyles: { fillColor: [238, 46, 49], textColor: 255 },
+                    styles: { fontSize: 8 },
+                    columnStyles: {
+                        0: { cellWidth: 40 },
+                        1: { cellWidth: 35 },
+                        2: { cellWidth: 30 },
+                        3: { cellWidth: 15 }
+                    }
+                });
+            }
+            
+            // Adicionar observações
+            const finalY = doc.lastAutoTable ? doc.lastAutoTable.finalY + 10 : 70;
+            doc.setFontSize(10);
+            doc.setTextColor(0, 0, 0);
+            doc.text('Observações:', 15, finalY);
+            doc.setFontSize(8);
+            const splitObs = doc.splitTextToSize(observacao, 180);
+            doc.text(splitObs, 15, finalY + 5);
+            
+            // Nome do arquivo
+            const fileName = `Mix_Brastemp_${inputs.rede || 'Loja'}.pdf`;
+            
+            // Salvar PDF
+            try {
+                doc.save(fileName);
+                showToast('PDF gerado com sucesso!');
+            } catch (error) {
+                console.error('Erro ao gerar PDF:', error);
+                showToast('Erro ao gerar PDF', 3000);
+            }
+            
+            // Fechar modal se estiver aberto
+            document.getElementById('result-modal').classList.add('hidden');
+        }
+
+        // Event Listeners
+        document.addEventListener('DOMContentLoaded', () => {
+            loadState();
+            renderCatalog();
+        });
+
+        // Controles do modal de quantidade
+        document.getElementById('increase-qty').addEventListener('click', () => {
+            const input = document.getElementById('product-quantity');
+            input.value = Math.min(999, parseInt(input.value) + 1);
+        });
+
+        document.getElementById('decrease-qty').addEventListener('click', () => {
+            const input = document.getElementById('product-quantity');
+            input.value = Math.max(0, parseInt(input.value) - 1);
+        });
+
+        document.getElementById('set-indisponivel').addEventListener('click', setIndisponivel);
+
+        document.getElementById('confirm-quantity').addEventListener('click', () => {
+            const quantity = parseInt(document.getElementById('product-quantity').value);
+            
+            if (currentProduct && currentCategory && currentButton) {
+                const productId = `${currentCategory}-${currentProduct}`;
+                
+                if (quantity > 0) {
+                    selectedProducts[productId] = {
+                        product: currentProduct,
+                        category: currentCategory,
+                        quantity: quantity,
+                        indisponivel: false,
+                        codigo: currentButton.dataset.codigo
+                    };
+                    updateButtonVisual(currentButton, currentCategory, currentProduct, quantity, false);
+                } else {
+                    // Se quantity = 0, remover
+                    delete selectedProducts[productId];
+                    updateButtonVisual(currentButton, currentCategory, currentProduct, 0, false);
+                }
+                
+                saveState();
+            }
+            
+            closeQuantityModal();
+        });
+
+        document.getElementById('cancel-quantity').addEventListener('click', closeQuantityModal);
+
+        // Fechar modal ao clicar fora
+        document.getElementById('quantity-modal').addEventListener('click', (e) => {
+            if (e.target === document.getElementById('quantity-modal')) {
+                closeQuantityModal();
+            }
+        });
+
+        // Controles do modal de edição
+        document.getElementById('edit-increase-qty').addEventListener('click', () => {
+            const input = document.getElementById('edit-product-quantity');
+            input.value = Math.min(999, parseInt(input.value) + 1);
+        });
+
+        document.getElementById('edit-decrease-qty').addEventListener('click', () => {
+            const input = document.getElementById('edit-product-quantity');
+            input.value = Math.max(0, parseInt(input.value) - 1);
+        });
+
+        document.getElementById('edit-set-indisponivel').addEventListener('click', () => {
+            if (editingProductId && selectedProducts[editingProductId]) {
+                const product = selectedProducts[editingProductId];
+                
+                selectedProducts[editingProductId] = {
+                    ...product,
+                    quantity: 0,
+                    indisponivel: true
+                };
+                
+                saveState();
+                renderCatalog();
+                closeEditModal();
+                showToast('Produto marcado como indisponível');
+            }
+        });
+
+        document.getElementById('edit-remove-product').addEventListener('click', () => {
+            if (editingProductId) {
+                delete selectedProducts[editingProductId];
+                saveState();
+                renderCatalog();
+                closeEditModal();
+                showToast('Produto removido da lista');
+            }
+        });
+
+        document.getElementById('confirm-edit').addEventListener('click', () => {
+            if (editingProductId && selectedProducts[editingProductId]) {
+                const newQuantity = parseInt(document.getElementById('edit-product-quantity').value);
+                const product = selectedProducts[editingProductId];
+                
+                if (newQuantity > 0) {
+                    selectedProducts[editingProductId] = {
+                        ...product,
+                        quantity: newQuantity,
+                        indisponivel: false
+                    };
+                } else {
+                    delete selectedProducts[editingProductId];
+                }
+                
+                saveState();
+                renderCatalog();
+                closeEditModal();
+                showToast('Produto atualizado com sucesso');
+            }
+        });
+
+        document.getElementById('cancel-edit').addEventListener('click', closeEditModal);
+
+        // Fechar modal de edição ao clicar fora
+        document.getElementById('edit-quantity-modal').addEventListener('click', (e) => {
+            if (e.target === document.getElementById('edit-quantity-modal')) {
+                closeEditModal();
+            }
+        });
+
+        // Reset all
+        document.getElementById('reset-all').addEventListener('click', () => {
+            if(confirm('Limpar todas as seleções?')) {
+                selectedProducts = {};
+                localStorage.removeItem('selectedProducts');
+                renderCatalog();
+                document.getElementById('rede').value = '';
+                document.getElementById('id-rede').value = '';
+                document.getElementById('filial').value = '';
+                document.getElementById('visitante').value = '';
+                document.getElementById('observacao').value = '';
+                window.scrollTo(0,0);
+                showToast('Todos os dados foram limpos');
+            }
+        });
+
+        // Botões de exportação rápida no header
+        document.getElementById('export-excel').addEventListener('click', generateStyledExcel);
+        document.getElementById('export-pdf').addEventListener('click', generatePDF);
+
+        // Botão flutuante para adicionar produto
+        document.getElementById('add-product-float').addEventListener('click', () => {
+            document.getElementById('add-product-modal').classList.remove('hidden');
+        });
+
+        document.getElementById('cancel-add-product').addEventListener('click', () => {
+            document.getElementById('add-product-modal').classList.add('hidden');
+        });
+
+        document.getElementById('confirm-add-product').addEventListener('click', () => {
+            const category = document.getElementById('new-product-category').value;
+            const productCode = document.getElementById('new-product-code').value.trim().toUpperCase();
+            const productSAP = document.getElementById('new-product-sap').value.trim() || "SEM CADASTRO";
+            const quantity = parseInt(document.getElementById('new-product-qty').value) || 1;
+            
+            if (productCode === '') {
+                alert('Digite o código do produto');
+                return;
+            }
+            
+            const productId = `${category}-${productCode}`;
+            
+            // Salvar no catálogo personalizado
+            customProducts[productId] = {
+                category: category,
+                product: productCode,
+                codigo: productSAP
+            };
+            localStorage.setItem('customProducts', JSON.stringify(customProducts));
+            
+            // Adicionar aos selecionados
+            selectedProducts[productId] = {
+                product: productCode,
+                category: category,
+                quantity: quantity,
+                indisponivel: false,
+                codigo: productSAP
+            };
+            
+            saveState();
+            
+            // Re-renderizar
+            renderCatalog();
+            
+            // Limpar e fechar modal
+            document.getElementById('new-product-code').value = '';
+            document.getElementById('new-product-sap').value = '';
+            document.getElementById('new-product-qty').value = '1';
+            document.getElementById('add-product-modal').classList.add('hidden');
+            
+            showToast('Produto adicionado com sucesso!');
+        });
+
+        // Gerar relatório (abrir modal)
+        document.getElementById('generate-report').addEventListener('click', () => {
+            const inputs = {
+                rede: document.getElementById('rede').value || "-",
+                id: document.getElementById('id-rede').value || "-",
+                filial: document.getElementById('filial').value || "-",
+                data: formatDate(document.getElementById('data').value),
+                visitante: document.getElementById('visitante').value || "-"
+            };
+
+            const observacao = document.getElementById('observacao').value;
+            const textReport = generateTextReport(inputs, selectedProducts, observacao);
+            
+            // Preencher Modal
+            document.getElementById('text-preview').textContent = textReport;
+            
+            // Configurar WhatsApp
+            const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(textReport)}`;
+            document.getElementById('whatsapp-link').href = whatsappUrl;
+
+            // Abrir Modal
+            document.getElementById('result-modal').classList.remove('hidden');
+        });
+
+        // Configurar eventos dos botões Excel e PDF no modal
+        document.getElementById('generate-excel').addEventListener('click', generateStyledExcel);
+        document.getElementById('generate-pdf').addEventListener('click', generatePDF);
+
+        document.getElementById('close-modal').addEventListener('click', () => {
+            document.getElementById('result-modal').classList.add('hidden');
+        });
+
+        // Fechar modal de resultado ao clicar fora
+        document.getElementById('result-modal').addEventListener('click', (e) => {
+            if (e.target === document.getElementById('result-modal')) {
+                document.getElementById('result-modal').classList.add('hidden');
+            }
+        });
+
+        // Fechar modal de adicionar produto ao clicar fora
+        document.getElementById('add-product-modal').addEventListener('click', (e) => {
+            if (e.target === document.getElementById('add-product-modal')) {
+                document.getElementById('add-product-modal').classList.add('hidden');
+            }
+        });
+
+        // Tecla ESC para fechar modais
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                document.getElementById('quantity-modal').classList.remove('active');
+                document.getElementById('add-product-modal').classList.add('hidden');
+                document.getElementById('edit-quantity-modal').classList.add('hidden');
+                document.getElementById('result-modal').classList.add('hidden');
+            }
+        });
+
+        // Salvar estado automaticamente quando a página for fechada
+        window.addEventListener('beforeunload', () => {
+            saveState();
+        });
+    </script>
+</body>
+                  </html>
