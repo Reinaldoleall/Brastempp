@@ -581,30 +581,110 @@
             return `${day}/${month}/${year}`;
         }
 
-        // FUNÇÃO CORRIGIDA - EXCEL ORGANIZADO IGUAL À IMAGEM
+        // FUNÇÃO NOVA - CONSTRÓI CADA CÉLULA COM ESTILO NO MOMENTO DA CRIAÇÃO
         function generateStyledExcel(inputs, selectedData) {
             // Criar workbook
             const wb = XLSX.utils.book_new();
             
-            // Array de dados
-            const data = [];
+            // Array para armazenar as linhas (cada linha é um array de células)
+            const rows = [];
             
-            // 1. TÍTULO PRINCIPAL
-            data.push(['RELATÓRIO DE MIX E DISPONIBILIDADE - BRASTEMP/CONSUL']);
-            data.push([]);
+            // ========== ESTILOS BASE ==========
+            const borderAll = {
+                top: { style: 'thin', color: { rgb: '000000' } },
+                bottom: { style: 'thin', color: { rgb: '000000' } },
+                left: { style: 'thin', color: { rgb: '000000' } },
+                right: { style: 'thin', color: { rgb: '000000' } }
+            };
             
-            // 2. INFORMAÇÕES DA UNIDADE - FORMATO CORRETO
-            data.push(['INFORMAÇÕES DA UNIDADE']);
-            data.push(['Rede:', inputs.rede, '', 'Data da Visita:', inputs.data]);
-            data.push(['ID Loja:', inputs.id, '', 'Filial:', inputs.filial]);
-            data.push([]);
+            // Função helper para criar célula com estilo
+            function createCell(value, options = {}) {
+                const cell = {
+                    t: typeof value === 'number' ? 'n' : 's',
+                    v: value,
+                    s: {
+                        border: borderAll,
+                        alignment: {
+                            vertical: 'center',
+                            horizontal: options.horizontal || 'center',
+                            wrapText: options.wrapText || false
+                        }
+                    }
+                };
+                
+                if (options.bold) {
+                    cell.s.font = { bold: true };
+                }
+                
+                if (options.fill) {
+                    cell.s.fill = { fgColor: { rgb: options.fill } };
+                }
+                
+                if (options.fontSize) {
+                    if (!cell.s.font) cell.s.font = {};
+                    cell.s.font.sz = options.fontSize;
+                }
+                
+                return cell;
+            }
             
-            // 3. CABEÇALHO DA TABELA
-            data.push(['CATEGORIA', 'MODELO', 'QTD DISPONÍVEL', 'STATUS', 'SITUAÇÃO']);
+            // ========== LINHA 0 - TÍTULO PRINCIPAL ==========
+            rows.push([
+                createCell('RELATÓRIO DE MIX E DISPONIBILIDADE - BRASTEMP/CONSUL', {
+                    bold: true,
+                    fontSize: 14,
+                    horizontal: 'center'
+                }),
+                createCell(''),
+                createCell(''),
+                createCell(''),
+                createCell('')
+            ]);
             
-            // 4. CATEGORIAS E PRODUTOS
+            // ========== LINHA 1 - VAZIA ==========
+            rows.push([createCell(''), createCell(''), createCell(''), createCell(''), createCell('')]);
+            
+            // ========== LINHA 2 - INFORMAÇÕES DA UNIDADE ==========
+            rows.push([
+                createCell('INFORMAÇÕES DA UNIDADE', { bold: true, fontSize: 12, horizontal: 'left' }),
+                createCell(''),
+                createCell(''),
+                createCell(''),
+                createCell('')
+            ]);
+            
+            // ========== LINHA 3 - REDE E DATA ==========
+            rows.push([
+                createCell('Rede:', { bold: true, horizontal: 'right' }),
+                createCell(inputs.rede, { bold: true, horizontal: 'left' }),
+                createCell(''),
+                createCell('Data da Visita:', { bold: true, horizontal: 'right' }),
+                createCell(inputs.data, { bold: true, horizontal: 'left' })
+            ]);
+            
+            // ========== LINHA 4 - ID E FILIAL ==========
+            rows.push([
+                createCell('ID Loja:', { bold: true, horizontal: 'right' }),
+                createCell(inputs.id, { bold: true, horizontal: 'left' }),
+                createCell(''),
+                createCell('Filial:', { bold: true, horizontal: 'right' }),
+                createCell(inputs.filial, { bold: true, horizontal: 'left' })
+            ]);
+            
+            // ========== LINHA 5 - VAZIA ==========
+            rows.push([createCell(''), createCell(''), createCell(''), createCell(''), createCell('')]);
+            
+            // ========== LINHA 6 - CABEÇALHO DA TABELA ==========
+            rows.push([
+                createCell('CATEGORIA', { bold: true, fill: 'E7E6E6' }),
+                createCell('MODELO', { bold: true, fill: 'E7E6E6' }),
+                createCell('QTD DISPONÍVEL', { bold: true, fill: 'E7E6E6' }),
+                createCell('STATUS', { bold: true, fill: 'E7E6E6' }),
+                createCell('SITUAÇÃO', { bold: true, fill: 'E7E6E6' })
+            ]);
+            
+            // ========== CATEGORIAS E PRODUTOS ==========
             const categoriasOrdem = ["Geladeiras", "MWO", "Lavadora", "Fogão", "Outros"];
-            let linhaCategoria = 6; // Controle para merges
             
             categoriasOrdem.forEach(cat => {
                 const itens = Object.values(selectedData)
@@ -612,66 +692,134 @@
                     .sort((a, b) => a.product.localeCompare(b.product));
                 
                 if (itens.length > 0) {
-                    const inicioCat = data.length;
-                    
-                    // Adicionar produtos da categoria
+                    // PRODUTOS DA CATEGORIA
                     itens.forEach((item, index) => {
                         const status = item.indisponivel ? "INDISPONÍVEL" : "DISPONÍVEL";
                         const situacao = item.indisponivel ? "CRÍTICO" : (item.quantity < 2 ? "ATENÇÃO" : "OK");
                         
-                        // Mostrar categoria apenas no primeiro item
-                        data.push([
-                            index === 0 ? cat.toUpperCase() : '',
-                            item.product,
-                            item.indisponivel ? 0 : item.quantity,
-                            status,
-                            situacao
+                        rows.push([
+                            createCell(index === 0 ? cat.toUpperCase() : '', { horizontal: 'left' }),
+                            createCell(item.product, { horizontal: 'left' }),
+                            createCell(item.indisponivel ? 0 : item.quantity, {}),
+                            createCell(status, {}),
+                            createCell(situacao, {})
                         ]);
                     });
                     
-                    // Subtotal da categoria
+                    // SUBTOTAL DA CATEGORIA
                     const subtotal = itens.reduce((sum, item) => sum + (item.indisponivel ? 0 : item.quantity), 0);
                     const totalItens = itens.length;
                     const indisponiveis = itens.filter(item => item.indisponivel).length;
                     
-                    data.push([
-                        'SUBTOTAL DA CATEGORIA:',
-                        '',
-                        subtotal,
-                        `Total Itens: ${totalItens}`,
-                        `IND: ${indisponiveis}`
+                    rows.push([
+                        createCell('SUBTOTAL DA CATEGORIA:', { bold: true, fill: 'DCE6F1', horizontal: 'left' }),
+                        createCell('', { fill: 'DCE6F1' }),
+                        createCell(subtotal, { bold: true, fill: 'DCE6F1' }),
+                        createCell(`Total Itens: ${totalItens}`, { bold: true, fill: 'DCE6F1' }),
+                        createCell(`IND: ${indisponiveis}`, { bold: true, fill: 'DCE6F1' })
                     ]);
                     
-                    // Linha em branco após cada categoria
-                    data.push([]);
+                    // LINHA EM BRANCO APÓS CATEGORIA
+                    rows.push([createCell(''), createCell(''), createCell(''), createCell(''), createCell('')]);
                 }
             });
             
-            // 5. TOTAL GERAL
+            // ========== TOTAL GERAL ==========
             const totalGeral = Object.values(selectedData).reduce((sum, item) => sum + (item.indisponivel ? 0 : item.quantity), 0);
             const totalItensGeral = Object.keys(selectedData).length;
             const totalIndisponiveis = Object.values(selectedData).filter(item => item.indisponivel).length;
             
-            data.push(['', '', 'TOTAL GERAL', '', '']);
-            data.push(['', 'Quantidade Total:', totalGeral, 'Total de SKUs:', totalItensGeral]);
-            data.push(['', 'Indisponíveis:', totalIndisponiveis, 'Disponíveis:', totalItensGeral - totalIndisponiveis]);
-            data.push([]);
+            rows.push([
+                createCell(''),
+                createCell(''),
+                createCell('TOTAL GERAL', { bold: true, fill: 'BFBFBF' }),
+                createCell(''),
+                createCell('')
+            ]);
             
-            // 6. OBSERVAÇÕES
-            data.push(['OBSERVAÇÕES GERAIS:']);
-            data.push([inputs.obs]);
-            data.push([]);
+            rows.push([
+                createCell(''),
+                createCell('Quantidade Total:', { bold: true, horizontal: 'right' }),
+                createCell(totalGeral, { bold: true }),
+                createCell('Total de SKUs:', { bold: true, horizontal: 'right' }),
+                createCell(totalItensGeral, { bold: true })
+            ]);
             
-            // 7. DATA/HORA DO RELATÓRIO
+            rows.push([
+                createCell(''),
+                createCell('Indisponíveis:', { bold: true, horizontal: 'right' }),
+                createCell(totalIndisponiveis, { bold: true }),
+                createCell('Disponíveis:', { bold: true, horizontal: 'right' }),
+                createCell(totalItensGeral - totalIndisponiveis, { bold: true })
+            ]);
+            
+            // ========== LINHA EM BRANCO ==========
+            rows.push([createCell(''), createCell(''), createCell(''), createCell(''), createCell('')]);
+            
+            // ========== OBSERVAÇÕES ==========
+            rows.push([
+                createCell('OBSERVAÇÕES GERAIS:', { bold: true, horizontal: 'left' }),
+                createCell(''),
+                createCell(''),
+                createCell(''),
+                createCell('')
+            ]);
+            
+            rows.push([
+                createCell(inputs.obs, { horizontal: 'left', wrapText: true }),
+                createCell(''),
+                createCell(''),
+                createCell(''),
+                createCell('')
+            ]);
+            
+            // ========== LINHA EM BRANCO ==========
+            rows.push([createCell(''), createCell(''), createCell(''), createCell(''), createCell('')]);
+            
+            // ========== DATA/HORA DO RELATÓRIO ==========
             const now = new Date();
             const dataHora = now.toLocaleDateString('pt-BR') + ', ' + 
                             now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-            data.push([`Relatório gerado em: ${dataHora}`]);
             
-            // Converter para worksheet
-            const ws = XLSX.utils.aoa_to_sheet(data);
+            rows.push([
+                createCell(`Relatório gerado em: ${dataHora}`, { horizontal: 'left' }),
+                createCell(''),
+                createCell(''),
+                createCell(''),
+                createCell('')
+            ]);
             
-            // LARGURAS DAS COLUNAS
+            // ========== CONVERTER PARA WORKSHEET ==========
+            const ws = XLSX.utils.aoa_to_sheet(rows.map(row => row.map(cell => cell.v)));
+            
+            // APLICAR OS ESTILOS DE CADA CÉLULA
+            for (let R = 0; R < rows.length; R++) {
+                for (let C = 0; C < rows[R].length; C++) {
+                    if (rows[R][C]) {
+                        const cellRef = XLSX.utils.encode_cell({ r: R, c: C });
+                        ws[cellRef] = rows[R][C];
+                    }
+                }
+            }
+            
+            // ========== MESCLAR CÉLULAS ==========
+            ws['!merges'] = [
+                { s: { r: 0, c: 0 }, e: { r: 0, c: 4 } }, // Título principal
+                { s: { r: 2, c: 0 }, e: { r: 2, c: 4 } }, // INFORMAÇÕES DA UNIDADE
+            ];
+            
+            // Mesclar células dos subtotais (A e B)
+            let rowIndex = 7; // Começar após cabeçalho
+            categoriasOrdem.forEach(cat => {
+                const itens = Object.values(selectedData).filter(p => p.category === cat);
+                if (itens.length > 0) {
+                    const subtotalRow = rowIndex + itens.length;
+                    ws['!merges'].push({ s: { r: subtotalRow, c: 0 }, e: { r: subtotalRow, c: 1 } });
+                    rowIndex = subtotalRow + 2; // +1 subtotal, +1 linha em branco
+                }
+            });
+            
+            // ========== LARGURAS DAS COLUNAS ==========
             ws['!cols'] = [
                 { wch: 20 }, // Categoria
                 { wch: 18 }, // Modelo
@@ -680,134 +828,9 @@
                 { wch: 12 }  // Situação
             ];
             
-            // MESCLAR CÉLULAS
-            ws['!merges'] = [
-                { s: { r: 0, c: 0 }, e: { r: 0, c: 4 } }, // Título principal
-                { s: { r: 2, c: 0 }, e: { r: 2, c: 4 } }  // INFORMAÇÕES DA UNIDADE
-            ];
-            
-            // Mesclar células para subtotais
-            let linhaAtual = 6; // Começar após cabeçalho
-            
-            categoriasOrdem.forEach(cat => {
-                const itens = Object.values(selectedData).filter(p => p.category === cat);
-                if (itens.length > 0) {
-                    const linhaSubtotal = linhaAtual + itens.length;
-                    
-                    // Mesclar A e B no subtotal
-                    ws['!merges'].push({ s: { r: linhaSubtotal, c: 0 }, e: { r: linhaSubtotal, c: 1 } });
-                    
-                    linhaAtual = linhaSubtotal + 2; // +1 subtotal, +1 linha em branco
-                }
-            });
-            
-            // ESTILOS
-            const borderAll = {
-                top: { style: 'thin', color: { rgb: '000000' } },
-                bottom: { style: 'thin', color: { rgb: '000000' } },
-                left: { style: 'thin', color: { rgb: '000000' } },
-                right: { style: 'thin', color: { rgb: '000000' } }
-            };
-            
-            // Aplicar estilos célula por célula
-            const range = XLSX.utils.decode_range(ws['!ref']);
-            
-            for (let R = range.s.r; R <= range.e.r; R++) {
-                for (let C = range.s.c; C <= range.e.c; C++) {
-                    const cellRef = XLSX.utils.encode_cell({ r: R, c: C });
-                    
-                    if (!ws[cellRef]) {
-                        ws[cellRef] = { t: 's', v: '' };
-                    }
-                    
-                    // Inicializar estilo
-                    if (!ws[cellRef].s) ws[cellRef].s = {};
-                    
-                    // BORDAS (exceto linhas totalmente vazias)
-                    if (ws[cellRef].v !== '' || (R > 0 && ws[`${XLSX.utils.encode_cell({ r: R-1, c: C })}`]?.v !== '')) {
-                        ws[cellRef].s.border = borderAll;
-                    }
-                    
-                    // ALINHAMENTO
-                    ws[cellRef].s.alignment = {
-                        vertical: 'center',
-                        wrapText: true
-                    };
-                    
-                    // Categoria e Modelo: alinhar à esquerda
-                    if (C === 0 || C === 1) {
-                        ws[cellRef].s.alignment.horizontal = 'left';
-                    } else {
-                        ws[cellRef].s.alignment.horizontal = 'center';
-                    }
-                    
-                    // ESTILOS ESPECÍFICOS
-                    const valor = ws[cellRef].v;
-                    
-                    // Título principal
-                    if (R === 0) {
-                        ws[cellRef].s.font = { bold: true, sz: 14 };
-                        ws[cellRef].s.alignment.horizontal = 'center';
-                    }
-                    
-                    // INFORMAÇÕES DA UNIDADE (título)
-                    if (R === 2) {
-                        ws[cellRef].s.font = { bold: true, sz: 12 };
-                    }
-                    
-                    // Labels das informações (Rede:, ID Loja:, etc)
-                    if (R === 3 && C === 0) ws[cellRef].s.font = { bold: true };
-                    if (R === 3 && C === 3) ws[cellRef].s.font = { bold: true };
-                    if (R === 4 && C === 0) ws[cellRef].s.font = { bold: true };
-                    if (R === 4 && C === 3) ws[cellRef].s.font = { bold: true };
-                    
-                    // Valores das informações (Carrefour, 11902, etc)
-                    if (R === 3 && C === 1) ws[cellRef].s.font = { bold: true };
-                    if (R === 3 && C === 4) ws[cellRef].s.font = { bold: true };
-                    if (R === 4 && C === 1) ws[cellRef].s.font = { bold: true };
-                    if (R === 4 && C === 4) ws[cellRef].s.font = { bold: true };
-                    
-                    // Cabeçalho da tabela (linha 5)
-                    if (R === 5) {
-                        ws[cellRef].s.font = { bold: true };
-                        ws[cellRef].s.fill = { fgColor: { rgb: 'E7E6E6' } }; // Cinza claro
-                    }
-                    
-                    // SUBTOTAL - fundo azul claro e negrito
-                    if (typeof valor === 'string' && valor.includes('SUBTOTAL')) {
-                        ws[cellRef].s.font = { bold: true };
-                        ws[cellRef].s.fill = { fgColor: { rgb: 'DCE6F1' } }; // Azul claro
-                    }
-                    
-                    // TOTAL GERAL - fundo cinza e negrito
-                    if (typeof valor === 'string' && valor.includes('TOTAL GERAL')) {
-                        ws[cellRef].s.font = { bold: true };
-                        ws[cellRef].s.fill = { fgColor: { rgb: 'BFBFBF' } }; // Cinza
-                    }
-                    
-                    // Linhas de Quantidade Total e Indisponíveis
-                    if (typeof valor === 'string' && 
-                        (valor.includes('Quantidade Total:') || 
-                         valor.includes('Indisponíveis:') ||
-                         valor.includes('Total de SKUs:') ||
-                         valor.includes('Disponíveis:'))) {
-                        ws[cellRef].s.font = { bold: true };
-                    }
-                    
-                    // OBSERVAÇÕES GERAIS
-                    if (typeof valor === 'string' && valor.includes('OBSERVAÇÕES GERAIS:')) {
-                        ws[cellRef].s.font = { bold: true };
-                    }
-                }
-            }
-            
-            // Adicionar worksheet ao workbook
+            // ========== SALVAR ARQUIVO ==========
             XLSX.utils.book_append_sheet(wb, ws, 'Mix Brastemp');
-            
-            // Nome do arquivo
             const fileName = `Mix_Brastemp_${inputs.rede.replace(/\s+/g, '_')}_${inputs.data.replace(/\//g, '-')}.xlsx`;
-            
-            // Salvar arquivo
             XLSX.writeFile(wb, fileName);
         }
 
@@ -933,7 +956,7 @@
                 doc.save(`Mix_Brastemp_${inputs.rede || 'Loja'}.pdf`);
             };
             
-            // EXCEL CORRIGIDO
+            // EXCEL - NOVA VERSÃO CORRIGIDA
             document.getElementById('generate-excel').onclick = () => {
                 const inputs = {
                     rede: document.getElementById('rede').value || "Não informada",
@@ -962,4 +985,4 @@
         });
     </script>
 </body>
-    </html>
+</html>
