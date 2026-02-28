@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="theme-color" content="#EE2E31"> 
-    <title>Checklist Mix Brastemp</title>
+    <title>Checklist Mix Brastemp - 3 CDs</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
@@ -57,7 +57,7 @@
             border-radius: 1.5rem;
             padding: 1.5rem;
             width: 90%;
-            max-width: 320px;
+            max-width: 360px;
             box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2);
             animation: slideUp 0.3s ease-out;
         }
@@ -69,8 +69,8 @@
             background-color: #EE2E31;
             color: white;
             border-radius: 9999px;
-            width: 20px;
-            height: 20px;
+            width: 22px;
+            height: 22px;
             font-size: 11px;
             display: flex;
             align-items: center;
@@ -85,14 +85,40 @@
             background-color: #6B7280;
             color: white;
             border-radius: 9999px;
-            width: 20px;
-            height: 20px;
+            width: 22px;
+            height: 22px;
             font-size: 10px;
             display: flex;
             align-items: center;
             justify-content: center;
             font-weight: bold;
             border: 2px solid white;
+        }
+        
+        .cd-input-group {
+            display: flex;
+            gap: 0.5rem;
+            margin: 1rem 0;
+        }
+        .cd-input-group input {
+            flex: 1;
+            text-align: center;
+            padding: 0.75rem 0.25rem;
+            border: 2px solid #e5e7eb;
+            border-radius: 0.75rem;
+            font-size: 1rem;
+            font-weight: 600;
+        }
+        .cd-input-group input:focus {
+            border-color: #EE2E31;
+            outline: none;
+        }
+        .cd-label {
+            font-size: 0.7rem;
+            font-weight: 600;
+            color: #6B7280;
+            text-transform: uppercase;
+            margin-bottom: 0.25rem;
         }
         
         @keyframes slideUp {
@@ -167,26 +193,38 @@
     <!-- Toast Notification -->
     <div id="toast" class="toast-notification hidden"></div>
 
-    <!-- Modal de Quantidade -->
+    <!-- Modal de Quantidade com 3 CDs -->
     <div id="quantity-modal" class="quantity-modal">
         <div class="quantity-card">
-            <h3 class="text-lg font-bold text-gray-800 mb-4" id="modal-product-name">Produto</h3>
-            <p class="text-sm text-gray-500 mb-4" id="modal-product-category">Categoria</p>
+            <h3 class="text-lg font-bold text-gray-800 mb-1" id="modal-product-name">Produto</h3>
+            <p class="text-sm text-gray-500 mb-2" id="modal-product-category">Categoria</p>
             
-            <p class="text-xs text-gray-500 uppercase tracking-wider">Código do Produto</p>
-            <p id="modal-product-code" class="text-lg font-bold text-[#EE2E31] mb-4"></p>
+            <p class="text-xs text-gray-500 uppercase tracking-wider">Código SAP</p>
+            <p id="modal-product-code" class="text-lg font-bold text-[#EE2E31] mb-3"></p>
+            
+            <!-- Campos para os 3 CDs -->
+            <div class="mb-4">
+                <p class="text-sm font-medium text-gray-700 mb-2">Quantidade por CD:</p>
+                <div class="grid grid-cols-3 gap-2">
+                    <div>
+                        <div class="cd-label text-center">RJ1401</div>
+                        <input type="number" id="cd-rj1401" min="0" value="0" class="w-full text-center p-2 border-2 rounded-xl">
+                    </div>
+                    <div>
+                        <div class="cd-label text-center">SP1200</div>
+                        <input type="number" id="cd-sp1200" min="0" value="0" class="w-full text-center p-2 border-2 rounded-xl">
+                    </div>
+                    <div>
+                        <div class="cd-label text-center">SP1500</div>
+                        <input type="number" id="cd-sp1500" min="0" value="0" class="w-full text-center p-2 border-2 rounded-xl">
+                    </div>
+                </div>
+            </div>
             
             <div class="flex gap-2 mb-4">
                 <button id="set-indisponivel" class="flex-1 bg-gray-600 text-white font-bold py-3 rounded-xl hover:bg-gray-700 transition shadow-lg">
                     <i class="fas fa-times-circle mr-1"></i> IND
                 </button>
-            </div>
-            
-            <p class="text-sm text-gray-500 mb-2">Quantidade disponível:</p>
-            <div class="flex items-center justify-between mb-6">
-                <button id="decrease-qty" class="w-12 h-12 rounded-full bg-gray-200 text-gray-600 text-2xl font-bold hover:bg-gray-300 transition flex items-center justify-center">−</button>
-                <input type="number" id="product-quantity" value="1" min="0" max="999" class="w-20 text-center text-2xl font-bold border-2 border-gray-200 rounded-xl p-2 focus:border-red-500 focus:outline-none">
-                <button id="increase-qty" class="w-12 h-12 rounded-full bg-gray-200 text-gray-600 text-2xl font-bold hover:bg-gray-300 transition flex items-center justify-center">+</button>
             </div>
             
             <div class="flex gap-3">
@@ -208,28 +246,23 @@
                     <label class="text-xs text-gray-500 font-bold uppercase">Categoria</label>
                     <select id="new-product-category" class="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-red-500 focus:outline-none">
                         <option value="Geladeiras">Geladeiras</option>
-                        <option value="MWO">Microondas</option>
                         <option value="Lavadora">Lavadora</option>
                         <option value="Fogão">Fogão</option>
                         <option value="Cooktop">Cooktop</option>
+                        <option value="MWO">Microondas</option>
                         <option value="Freezer">Freezer</option>
                         <option value="Outros">Outros</option>
                     </select>
                 </div>
                 
                 <div>
-                    <label class="text-xs text-gray-500 font-bold uppercase">Código do Produto</label>
+                    <label class="text-xs text-gray-500 font-bold uppercase">Modelo</label>
                     <input type="text" id="new-product-code" placeholder="Ex: BRM44HB" class="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-red-500 focus:outline-none">
                 </div>
                 
                 <div>
-                    <label class="text-xs text-gray-500 font-bold uppercase">Código SAP (opcional)</label>
+                    <label class="text-xs text-gray-500 font-bold uppercase">Código SAP</label>
                     <input type="text" id="new-product-sap" placeholder="Ex: 4222342" class="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-red-500 focus:outline-none">
-                </div>
-                
-                <div>
-                    <label class="text-xs text-gray-500 font-bold uppercase">Quantidade Inicial</label>
-                    <input type="number" id="new-product-qty" value="1" min="0" class="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-red-500 focus:outline-none">
                 </div>
             </div>
             
@@ -240,7 +273,7 @@
         </div>
     </div>
 
-    <!-- Modal de Edição de Quantidade -->
+    <!-- Modal de Edição com 3 CDs -->
     <div id="edit-quantity-modal" class="fixed inset-0 bg-black bg-opacity-60 z-[80] hidden flex items-center justify-center backdrop-blur-sm">
         <div class="bg-white w-full max-w-sm rounded-2xl shadow-2xl p-5">
             <h3 class="text-lg font-bold text-gray-800 mb-4 flex items-center">
@@ -252,11 +285,22 @@
                 <p id="edit-product-code" class="text-sm text-gray-600"></p>
             </div>
             
-            <p class="text-sm text-gray-500 mb-2">Nova quantidade:</p>
-            <div class="flex items-center justify-between mb-6">
-                <button id="edit-decrease-qty" class="w-12 h-12 rounded-full bg-gray-200 text-gray-600 text-2xl font-bold hover:bg-gray-300 transition flex items-center justify-center">−</button>
-                <input type="number" id="edit-product-quantity" value="1" min="0" max="999" class="w-20 text-center text-2xl font-bold border-2 border-gray-200 rounded-xl p-2 focus:border-red-500 focus:outline-none">
-                <button id="edit-increase-qty" class="w-12 h-12 rounded-full bg-gray-200 text-gray-600 text-2xl font-bold hover:bg-gray-300 transition flex items-center justify-center">+</button>
+            <div class="mb-4">
+                <p class="text-sm font-medium text-gray-700 mb-2">Quantidade por CD:</p>
+                <div class="grid grid-cols-3 gap-2">
+                    <div>
+                        <div class="cd-label text-center">RJ1401</div>
+                        <input type="number" id="edit-cd-rj1401" min="0" value="0" class="w-full text-center p-2 border-2 rounded-xl">
+                    </div>
+                    <div>
+                        <div class="cd-label text-center">SP1200</div>
+                        <input type="number" id="edit-cd-sp1200" min="0" value="0" class="w-full text-center p-2 border-2 rounded-xl">
+                    </div>
+                    <div>
+                        <div class="cd-label text-center">SP1500</div>
+                        <input type="number" id="edit-cd-sp1500" min="0" value="0" class="w-full text-center p-2 border-2 rounded-xl">
+                    </div>
+                </div>
             </div>
             
             <div class="flex gap-2 mb-3">
@@ -279,7 +323,7 @@
     <header class="bg-[#EE2E31] text-white p-4 sticky top-0 z-50 shadow-md flex justify-between items-center">
         <div class="flex items-center gap-2">
             <i class="fas fa-clipboard-check"></i>
-            <h1 class="text-lg font-bold tracking-wide">Mix Brastemp</h1>
+            <h1 class="text-lg font-bold tracking-wide">Mix Brastemp - 3 CDs</h1>
         </div>
         <div class="flex gap-2">
             <button id="export-excel" class="text-xs bg-green-700 hover:bg-green-800 px-3 py-1 rounded-full transition">
@@ -326,8 +370,8 @@
         </div>
 
         <div class="bg-red-50 border-l-4 border-red-500 p-3 rounded-r mb-4 shadow-sm">
-            <p class="text-red-800 text-xs font-bold uppercase tracking-wider mb-1">Instruções</p>
-            <h2 class="text-gray-800 text-sm">Toque nos produtos para adicionar quantidade ou marcar como IND (indisponível). Toque duas vezes para editar. Use o botão vermelho (+) para adicionar produtos novos.</h2>
+            <p class="text-red-800 text-xs font-bold uppercase tracking-wider mb-1">Instruções - 3 CDs</p>
+            <h2 class="text-gray-800 text-sm">Toque nos produtos para lançar quantidades nos CDs (RJ1401, SP1200, SP1500). Toque duas vezes para editar. O badge mostra a soma total.</h2>
         </div>
 
         <!-- Container de Produtos -->
@@ -343,7 +387,7 @@
         <div class="bg-white w-full max-w-md sm:rounded-2xl rounded-t-2xl shadow-2xl transform transition-transform duration-300 max-h-[90vh] flex flex-col">
             
             <div class="p-4 border-b flex justify-between items-center bg-gray-50 rounded-t-2xl">
-                <h3 class="font-bold text-gray-800">Mix Gerado</h3>
+                <h3 class="font-bold text-gray-800">Mix Gerado - 3 CDs</h3>
                 <button id="close-modal" class="text-gray-500 hover:text-gray-700 bg-gray-200 rounded-full w-8 h-8 flex items-center justify-center">
                     <i class="fas fa-times"></i>
                 </button>
@@ -372,7 +416,7 @@
     <div class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] z-40">
         <div class="max-w-md mx-auto">
             <button id="generate-report" class="w-full bg-[#EE2E31] text-white font-bold py-3 rounded-xl shadow-lg hover:bg-red-700 active:scale-95 transition flex items-center justify-center gap-2">
-                <i class="fas fa-check-circle mr-2"></i> Visualizar Relatório
+                <i class="fas fa-check-circle mr-2"></i> Visualizar Relatório (3 CDs)
             </button>
         </div>
     </div>
@@ -387,12 +431,12 @@
         const today = new Date();
         
         // Abrir relatório do Carrefour
-document.getElementById('carrefour-logo').addEventListener('click', function() {
-    window.location.href = './carrefour.html'; // Substitua pela URL do seu relatório
-});
+        document.getElementById('carrefour-logo').addEventListener('click', function() {
+            window.location.href = './carrefour.html';
+        });
         document.getElementById('data').valueAsDate = today;
 
-        // Lista de Produtos Base com CÓDIGOS (atualizada com mais produtos)
+        // Lista de Produtos Base com CÓDIGOS (COMPLETA)
         const baseCatalog = {
             Geladeiras: [
                 // BRASTEMP
@@ -560,7 +604,7 @@ document.getElementById('carrefour-logo').addEventListener('click', function() {
             "Outros": "fa-tag"
         };
 
-        // Estado dos produtos
+        // Estado dos produtos - AGORA COM ESTRUTURA PARA 3 CDs
         let selectedProducts = {};
 
         // Variáveis para os modais
@@ -578,6 +622,14 @@ document.getElementById('carrefour-logo').addEventListener('click', function() {
             setTimeout(() => {
                 toast.classList.add('hidden');
             }, duration);
+        }
+
+        // Função para calcular total de um produto
+        function getTotalQuantity(productData) {
+            if (!productData) return 0;
+            if (productData.indisponivel) return 0;
+            const cd = productData.cd || {};
+            return (cd.rj1401 || 0) + (cd.sp1200 || 0) + (cd.sp1500 || 0);
         }
 
         // Função para renderizar o catálogo
@@ -610,10 +662,13 @@ document.getElementById('carrefour-logo').addEventListener('click', function() {
                     // Determinar classe baseada no estado
                     let baseClass = "product-item text-left p-3 rounded-xl border border-gray-200 bg-gray-50 text-gray-600 text-xs sm:text-sm font-medium flex items-center justify-between group relative";
                     
-                    if (selectedProducts[productId]) {
-                        if (selectedProducts[productId].indisponivel) {
+                    const productData = selectedProducts[productId];
+                    const totalQty = getTotalQuantity(productData);
+                    
+                    if (productData) {
+                        if (productData.indisponivel) {
                             baseClass = baseClass.replace('product-item', 'product-item indisponivel');
-                        } else if (selectedProducts[productId].quantity > 0) {
+                        } else if (totalQty > 0) {
                             baseClass = baseClass.replace('product-item', 'product-item selected');
                         }
                     }
@@ -628,13 +683,13 @@ document.getElementById('carrefour-logo').addEventListener('click', function() {
                     let icon = 'fa-plus-circle text-gray-300';
                     let badge = '';
                     
-                    if (selectedProducts[productId]) {
-                        if (selectedProducts[productId].indisponivel) {
+                    if (productData) {
+                        if (productData.indisponivel) {
                             icon = 'fa-times-circle text-white';
                             badge = `<span class="indisponivel-badge">IND</span>`;
-                        } else if (selectedProducts[productId].quantity > 0) {
+                        } else if (totalQty > 0) {
                             icon = 'fa-check-circle text-white';
-                            badge = `<span class="quantity-badge">${selectedProducts[productId].quantity}</span>`;
+                            badge = `<span class="quantity-badge">${totalQty}</span>`;
                         }
                     }
                     
@@ -674,7 +729,11 @@ document.getElementById('carrefour-logo').addEventListener('click', function() {
             
             document.getElementById('edit-product-name').textContent = `${product.product} - ${product.category}`;
             document.getElementById('edit-product-code').textContent = `Código: ${getProductCode(product.category, product.product)}`;
-            document.getElementById('edit-product-quantity').value = product.quantity || 0;
+            
+            const cd = product.cd || {};
+            document.getElementById('edit-cd-rj1401').value = cd.rj1401 || 0;
+            document.getElementById('edit-cd-sp1200').value = cd.sp1200 || 0;
+            document.getElementById('edit-cd-sp1500').value = cd.sp1500 || 0;
             
             document.getElementById('edit-quantity-modal').classList.remove('hidden');
         }
@@ -690,14 +749,12 @@ document.getElementById('carrefour-logo').addEventListener('click', function() {
             
             document.getElementById('modal-product-name').textContent = product;
             document.getElementById('modal-product-category').textContent = `Categoria: ${category}`;
-            
             document.getElementById('modal-product-code').textContent = btn.dataset.codigo || "SEM CÓDIGO";
             
-            if (currentData.indisponivel) {
-                document.getElementById('product-quantity').value = 0;
-            } else {
-                document.getElementById('product-quantity').value = currentData.quantity || 1;
-            }
+            const cd = currentData.cd || {};
+            document.getElementById('cd-rj1401').value = currentData.indisponivel ? 0 : (cd.rj1401 || 0);
+            document.getElementById('cd-sp1200').value = currentData.indisponivel ? 0 : (cd.sp1200 || 0);
+            document.getElementById('cd-sp1500').value = currentData.indisponivel ? 0 : (cd.sp1500 || 0);
             
             document.getElementById('quantity-modal').classList.add('active');
         }
@@ -724,13 +781,13 @@ document.getElementById('carrefour-logo').addEventListener('click', function() {
                 selectedProducts[productId] = {
                     product: currentProduct,
                     category: currentCategory,
-                    quantity: 0,
+                    cd: { rj1401: 0, sp1200: 0, sp1500: 0 },
                     indisponivel: true,
                     codigo: currentButton.dataset.codigo
                 };
                 
                 // Atualizar visual
-                updateButtonVisual(currentButton, currentCategory, currentProduct, 0, true);
+                updateButtonVisual(currentButton, productId);
                 
                 // Salvar estado
                 saveState();
@@ -740,17 +797,15 @@ document.getElementById('carrefour-logo').addEventListener('click', function() {
         }
 
         // Atualizar visual do botão
-        function updateButtonVisual(btn, category, product, quantity, isIndisponivel = false) {
-            const productId = `${category}-${product}`;
+        function updateButtonVisual(btn, productId) {
+            const productData = selectedProducts[productId];
             
-            // Remover classes antigas
             btn.classList.remove('selected', 'indisponivel');
             
-            // Remover badge antigo
             const oldBadge = btn.querySelector('.quantity-badge, .indisponivel-badge');
             if (oldBadge) oldBadge.remove();
             
-            if (isIndisponivel) {
+            if (productData?.indisponivel) {
                 btn.classList.add('indisponivel');
                 btn.querySelector('i').className = "fas fa-times-circle text-white";
                 
@@ -758,17 +813,19 @@ document.getElementById('carrefour-logo').addEventListener('click', function() {
                 badge.className = 'indisponivel-badge';
                 badge.textContent = 'IND';
                 btn.appendChild(badge);
-            } else if (quantity > 0) {
-                btn.classList.add('selected');
-                btn.querySelector('i').className = "fas fa-check-circle text-white";
-                
-                const badge = document.createElement('span');
-                badge.className = 'quantity-badge';
-                badge.textContent = quantity;
-                btn.appendChild(badge);
             } else {
-                btn.classList.remove('selected', 'indisponivel');
-                btn.querySelector('i').className = "fas fa-plus-circle text-gray-300 transition-colors group-hover:text-red-300";
+                const total = getTotalQuantity(productData);
+                if (total > 0) {
+                    btn.classList.add('selected');
+                    btn.querySelector('i').className = "fas fa-check-circle text-white";
+                    
+                    const badge = document.createElement('span');
+                    badge.className = 'quantity-badge';
+                    badge.textContent = total;
+                    btn.appendChild(badge);
+                } else {
+                    btn.querySelector('i').className = "fas fa-plus-circle text-gray-300 transition-colors group-hover:text-red-300";
+                }
             }
         }
 
@@ -782,6 +839,18 @@ document.getElementById('carrefour-logo').addEventListener('click', function() {
             const saved = localStorage.getItem('selectedProducts');
             if (saved) {
                 selectedProducts = JSON.parse(saved);
+                // Migrar dados antigos para nova estrutura se necessário
+                Object.values(selectedProducts).forEach(item => {
+                    if (item.quantity !== undefined && !item.cd) {
+                        // Converter formato antigo para novo
+                        item.cd = {
+                            rj1401: item.quantity || 0,
+                            sp1200: 0,
+                            sp1500: 0
+                        };
+                        delete item.quantity;
+                    }
+                });
             }
         }
 
@@ -795,21 +864,21 @@ document.getElementById('carrefour-logo').addEventListener('click', function() {
 
         // Função para gerar texto do relatório
         function generateTextReport(inputs, selectedData, observacao) {
-            let text = `*MIX BRASTEMP/CONSUL - RELATÓRIO COMPLETO*\n\n`;
+            let text = `*MIX BRASTEMP/CONSUL - RELATÓRIO 3 CDs*\n\n`;
             text += `*Rede:* ${inputs.rede}\n`;
             text += `*ID Loja:* ${inputs.id}\n`;
             text += `*Filial:* ${inputs.filial}\n`;
             text += `*Data:* ${inputs.data}\n`;
             text += `*Visitante:* ${inputs.visitante}\n\n`;
 
-            text += `*PRODUTOS DISPONÍVEIS NO CD:*\n\n`;
+            text += `*PRODUTOS POR CD:*\n\n`;
 
             const order = ["Geladeiras", "Lavadora", "Fogão", "Cooktop", "MWO", "Freezer", "Outros"];
             let hasItems = false;
 
             order.forEach(cat => {
                 const catProducts = Object.entries(selectedData)
-                    .filter(([key, value]) => key.startsWith(cat))
+                    .filter(([key, value]) => key.startsWith(cat) && !value.indisponivel)
                     .sort((a, b) => a[1].product.localeCompare(b[1].product));
                 
                 if (catProducts.length > 0) {
@@ -818,32 +887,53 @@ document.getElementById('carrefour-logo').addEventListener('click', function() {
                     
                     catProducts.forEach(([key, data]) => {
                         const codigo = getProductCode(data.category, data.product);
-                        if (data.indisponivel) {
-                            text += `  •  ${data.product} (Cód: ${codigo}): 00 *(INDISPONÍVEL)*\n`;
-                        } else {
-                            const qtyStr = data.quantity.toString().padStart(2, '0');
-                            text += `  •  ${data.product} (Cód: ${codigo}): ${qtyStr} unidade(s)\n`;
-                        }
+                        const cd = data.cd || {};
+                        text += `  • ${data.product} (Cód: ${codigo}): `;
+                        text += `RJ:${cd.rj1401||0}  SP1200:${cd.sp1200||0}  SP1500:${cd.sp1500||0}\n`;
                     });
                     text += `\n`;
                 }
             });
 
-            if (!hasItems) {
+            // Indisponíveis
+            const indisponiveis = Object.values(selectedData).filter(item => item.indisponivel);
+            if (indisponiveis.length > 0) {
+                text += `*INDISPONÍVEIS:*\n`;
+                indisponiveis.forEach(item => {
+                    text += `  • ${item.product} (Cód: ${item.codigo})\n`;
+                });
+                text += `\n`;
+            }
+
+            if (!hasItems && indisponiveis.length === 0) {
                 text += "_Nenhum produto selecionado._\n\n";
             }
 
             // Totais
             const totalItens = Object.keys(selectedData).length;
-            const totalIndisponiveis = Object.values(selectedData).filter(item => item.indisponivel).length;
+            const totalIndisponiveis = indisponiveis.length;
             const totalDisponiveis = totalItens - totalIndisponiveis;
-            const totalQuantidade = Object.values(selectedData).reduce((sum, item) => sum + (item.indisponivel ? 0 : item.quantity), 0);
+            
+            // Calcular totais por CD
+            let totalRJ = 0, totalSP1200 = 0, totalSP1500 = 0;
+            Object.values(selectedData).forEach(item => {
+                if (!item.indisponivel) {
+                    const cd = item.cd || {};
+                    totalRJ += cd.rj1401 || 0;
+                    totalSP1200 += cd.sp1200 || 0;
+                    totalSP1500 += cd.sp1500 || 0;
+                }
+            });
+            const totalGeral = totalRJ + totalSP1200 + totalSP1500;
 
             text += `*RESUMO:*\n`;
             text += `  • Total de SKUs: ${totalItens}\n`;
             text += `  • Disponíveis: ${totalDisponiveis}\n`;
-            text += `  • Indisponíveis (IND): ${totalIndisponiveis}\n`;
-            text += `  • Quantidade total em estoque: ${totalQuantidade} unidades\n\n`;
+            text += `  • Indisponíveis: ${totalIndisponiveis}\n`;
+            text += `  • Total RJ1401: ${totalRJ} unidades\n`;
+            text += `  • Total SP1200: ${totalSP1200} unidades\n`;
+            text += `  • Total SP1500: ${totalSP1500} unidades\n`;
+            text += `  • TOTAL GERAL: ${totalGeral} unidades\n\n`;
 
             text += `*OBSERVAÇÕES:*\n`;
             text += observacao && observacao.trim() !== '' ? observacao : "Sem observações adicionais.";
@@ -858,7 +948,45 @@ document.getElementById('carrefour-logo').addEventListener('click', function() {
             return `${day}/${month}/${year}`;
         }
 
-        // Função para exportar Excel
+        // Função para criar célula com estilo (Excel)
+        function cell(value, options = {}) {
+            const borderStyle = {
+                top: { style: 'thin', color: { rgb: '000000' } },
+                bottom: { style: 'thin', color: { rgb: '000000' } },
+                left: { style: 'thin', color: { rgb: '000000' } },
+                right: { style: 'thin', color: { rgb: '000000' } }
+            };
+            
+            const cellObj = {
+                t: typeof value === 'number' ? 'n' : 's',
+                v: value,
+                s: {
+                    border: borderStyle,
+                    alignment: {
+                        vertical: 'center',
+                        horizontal: options.align || 'center',
+                        wrapText: options.wrap || false
+                    }
+                }
+            };
+            
+            if (options.bold) {
+                cellObj.s.font = { bold: true };
+            }
+            
+            if (options.fill) {
+                cellObj.s.fill = { fgColor: { rgb: options.fill } };
+            }
+            
+            if (options.fontSize) {
+                if (!cellObj.s.font) cellObj.s.font = {};
+                cellObj.s.font.sz = options.fontSize;
+            }
+            
+            return cellObj;
+        }
+
+        // Função para exportar Excel com estilo
         function generateStyledExcel() {
             const inputs = {
                 rede: document.getElementById('rede').value || "Não informada",
@@ -875,58 +1003,19 @@ document.getElementById('carrefour-logo').addEventListener('click', function() {
             // Array para armazenar as linhas
             const rows = [];
             
-            // Estilo base com bordas
-            const borderStyle = {
-                top: { style: 'thin', color: { rgb: '000000' } },
-                bottom: { style: 'thin', color: { rgb: '000000' } },
-                left: { style: 'thin', color: { rgb: '000000' } },
-                right: { style: 'thin', color: { rgb: '000000' } }
-            };
-            
-            // Função para criar célula
-            function cell(value, options = {}) {
-                const cellObj = {
-                    t: typeof value === 'number' ? 'n' : 's',
-                    v: value,
-                    s: {
-                        border: borderStyle,
-                        alignment: {
-                            vertical: 'center',
-                            horizontal: options.align || 'center',
-                            wrapText: options.wrap || false
-                        }
-                    }
-                };
-                
-                if (options.bold) {
-                    cellObj.s.font = { bold: true };
-                }
-                
-                if (options.fill) {
-                    cellObj.s.fill = { fgColor: { rgb: options.fill } };
-                }
-                
-                if (options.fontSize) {
-                    if (!cellObj.s.font) cellObj.s.font = {};
-                    cellObj.s.font.sz = options.fontSize;
-                }
-                
-                return cellObj;
-            }
-            
             // TÍTULO PRINCIPAL
             rows.push([
-                cell('RELATÓRIO DE MIX E DISPONIBILIDADE - BRASTEMP/CONSUL', { bold: true, fontSize: 14, align: 'center' }),
-                cell(''), cell(''), cell(''), cell(''), cell(''), cell('')
+                cell('RELATÓRIO DE MIX - 3 CDs (RJ1401, SP1200, SP1500)', { bold: true, fontSize: 14, align: 'center' }),
+                cell(''), cell(''), cell(''), cell(''), cell(''), cell(''), cell('')
             ]);
             
             // LINHA VAZIA
-            rows.push([cell(''), cell(''), cell(''), cell(''), cell(''), cell(''), cell('')]);
+            rows.push([cell(''), cell(''), cell(''), cell(''), cell(''), cell(''), cell(''), cell('')]);
             
             // INFORMAÇÕES DA UNIDADE
             rows.push([
                 cell('INFORMAÇÕES DA UNIDADE', { bold: true, fontSize: 12, align: 'center' }),
-                cell(''), cell(''), cell(''), cell(''), cell(''), cell('')
+                cell(''), cell(''), cell(''), cell(''), cell(''), cell(''), cell('')
             ]);
             
             // REDE, DATA E VISITANTE
@@ -936,6 +1025,7 @@ document.getElementById('carrefour-logo').addEventListener('click', function() {
                 cell(''),
                 cell('Data da Visita:', { bold: true }),
                 cell(inputs.data, { bold: true }),
+                cell(''),
                 cell(''),
                 cell('')
             ]);
@@ -948,6 +1038,7 @@ document.getElementById('carrefour-logo').addEventListener('click', function() {
                 cell('Filial:', { bold: true }),
                 cell(inputs.filial, { bold: true }),
                 cell(''),
+                cell(''),
                 cell('')
             ]);
             
@@ -955,21 +1046,22 @@ document.getElementById('carrefour-logo').addEventListener('click', function() {
             rows.push([
                 cell('Visitante:', { bold: true }),
                 cell(inputs.visitante, { bold: true }),
-                cell(''), cell(''), cell(''), cell(''), cell('')
+                cell(''), cell(''), cell(''), cell(''), cell(''), cell('')
             ]);
             
             // LINHA VAZIA
-            rows.push([cell(''), cell(''), cell(''), cell(''), cell(''), cell(''), cell('')]);
+            rows.push([cell(''), cell(''), cell(''), cell(''), cell(''), cell(''), cell(''), cell('')]);
             
             // CABEÇALHO DA TABELA
             rows.push([
                 cell('CATEGORIA', { bold: true, fill: 'F2F2F2' }),
                 cell('MODELO', { bold: true, fill: 'F2F2F2' }),
                 cell('CÓDIGO SAP', { bold: true, fill: 'F2F2F2' }),
-                cell('QTD', { bold: true, fill: 'F2F2F2' }),
-                cell('STATUS', { bold: true, fill: 'F2F2F2' }),
-                cell('SITUAÇÃO', { bold: true, fill: 'F2F2F2' }),
-                cell('OBS', { bold: true, fill: 'F2F2F2' })
+                cell('RJ1401', { bold: true, fill: 'F2F2F2' }),
+                cell('SP1200', { bold: true, fill: 'F2F2F2' }),
+                cell('SP1500', { bold: true, fill: 'F2F2F2' }),
+                cell('TOTAL', { bold: true, fill: 'F2F2F2' }),
+                cell('STATUS', { bold: true, fill: 'F2F2F2' })
             ]);
             
             // CATEGORIAS
@@ -983,23 +1075,41 @@ document.getElementById('carrefour-logo').addEventListener('click', function() {
                 if (itens.length > 0) {
                     // PRODUTOS
                     itens.forEach((item, index) => {
-                        const status = item.indisponivel ? "INDISPONÍVEL" : "DISPONÍVEL";
-                        const situacao = item.indisponivel ? "CRÍTICO" : (item.quantity < 2 ? "ATENÇÃO" : "OK");
-                        const codigo = getProductCode(item.category, item.product);
-                        
-                        rows.push([
-                            cell(index === 0 ? cat.toUpperCase() : ''),
-                            cell(item.product),
-                            cell(codigo),
-                            cell(item.indisponivel ? 0 : item.quantity),
-                            cell(status),
-                            cell(situacao),
-                            cell('')
-                        ]);
+                        if (item.indisponivel) {
+                            rows.push([
+                                cell(index === 0 ? cat.toUpperCase() : ''),
+                                cell(item.product),
+                                cell(item.codigo || ''),
+                                cell(0),
+                                cell(0),
+                                cell(0),
+                                cell(0),
+                                cell('INDISPONÍVEL', { fill: 'FFE5E5' })
+                            ]);
+                        } else {
+                            const cd = item.cd || {};
+                            const total = (cd.rj1401||0) + (cd.sp1200||0) + (cd.sp1500||0);
+                            const situacao = total < 2 ? 'ATENÇÃO' : 'OK';
+                            const fillColor = total < 2 ? 'FFF2CC' : 'E5F5E5';
+                            
+                            rows.push([
+                                cell(index === 0 ? cat.toUpperCase() : ''),
+                                cell(item.product),
+                                cell(item.codigo || ''),
+                                cell(cd.rj1401 || 0),
+                                cell(cd.sp1200 || 0),
+                                cell(cd.sp1500 || 0),
+                                cell(total, { bold: true }),
+                                cell(situacao, { fill: fillColor })
+                            ]);
+                        }
                     });
                     
-                    // SUBTOTAL
-                    const subtotal = itens.reduce((sum, item) => sum + (item.indisponivel ? 0 : item.quantity), 0);
+                    // SUBTOTAL DA CATEGORIA
+                    const subtotalRJ = itens.reduce((sum, item) => sum + (item.indisponivel ? 0 : (item.cd?.rj1401 || 0)), 0);
+                    const subtotalSP1200 = itens.reduce((sum, item) => sum + (item.indisponivel ? 0 : (item.cd?.sp1200 || 0)), 0);
+                    const subtotalSP1500 = itens.reduce((sum, item) => sum + (item.indisponivel ? 0 : (item.cd?.sp1500 || 0)), 0);
+                    const subtotalGeral = subtotalRJ + subtotalSP1200 + subtotalSP1500;
                     const totalItens = itens.length;
                     const indisponiveis = itens.filter(item => item.indisponivel).length;
                     
@@ -1007,63 +1117,72 @@ document.getElementById('carrefour-logo').addEventListener('click', function() {
                         cell('SUBTOTAL DA CATEGORIA:', { bold: true }),
                         cell(''),
                         cell(''),
-                        cell(subtotal, { bold: true }),
-                        cell(`Total Itens: ${totalItens}`, { bold: true }),
-                        cell(`IND: ${indisponiveis}`, { bold: true }),
-                        cell('')
+                        cell(subtotalRJ, { bold: true }),
+                        cell(subtotalSP1200, { bold: true }),
+                        cell(subtotalSP1500, { bold: true }),
+                        cell(subtotalGeral, { bold: true }),
+                        cell(`Itens: ${totalItens} | IND: ${indisponiveis}`, { bold: true })
                     ]);
                     
                     // LINHA EM BRANCO APÓS CATEGORIA
-                    rows.push([cell(''), cell(''), cell(''), cell(''), cell(''), cell(''), cell('')]);
+                    rows.push([cell(''), cell(''), cell(''), cell(''), cell(''), cell(''), cell(''), cell('')]);
                 }
             });
             
-            // TOTAL GERAL
-            const totalGeral = Object.values(selectedProducts).reduce((sum, item) => sum + (item.indisponivel ? 0 : item.quantity), 0);
+            // TOTAIS GERAIS
+            let totalRJ = 0, totalSP1200 = 0, totalSP1500 = 0;
+            Object.values(selectedProducts).forEach(item => {
+                if (!item.indisponivel) {
+                    const cd = item.cd || {};
+                    totalRJ += cd.rj1401 || 0;
+                    totalSP1200 += cd.sp1200 || 0;
+                    totalSP1500 += cd.sp1500 || 0;
+                }
+            });
+            const totalGeral = totalRJ + totalSP1200 + totalSP1500;
             const totalItensGeral = Object.keys(selectedProducts).length;
             const totalIndisponiveis = Object.values(selectedProducts).filter(item => item.indisponivel).length;
             
             rows.push([
-                cell('RESUMO GERAL', { bold: true, fontSize: 12 }),
-                cell(''), cell(''), cell(''), cell(''), cell(''), cell('')
+                cell('TOTAIS GERAIS', { bold: true, fontSize: 12 }),
+                cell(''), cell(''), cell(''), cell(''), cell(''), cell(''), cell('')
             ]);
             
             rows.push([
-                cell('Quantidade Total:', { bold: true }),
-                cell(totalGeral, { bold: true }),
+                cell('Total por CD:', { bold: true }),
                 cell(''),
-                cell('Total de SKUs:', { bold: true }),
-                cell(totalItensGeral, { bold: true }),
                 cell(''),
+                cell(totalRJ, { bold: true }),
+                cell(totalSP1200, { bold: true }),
+                cell(totalSP1500, { bold: true }),
+                cell(totalGeral, { bold: true, fontSize: 12 }),
                 cell('')
             ]);
             
             rows.push([
-                cell('Indisponíveis:', { bold: true }),
-                cell(totalIndisponiveis, { bold: true }),
-                cell(''),
-                cell('Disponíveis:', { bold: true }),
-                cell(totalItensGeral - totalIndisponiveis, { bold: true }),
-                cell(''),
-                cell('')
+                cell('SKUs:', { bold: true }),
+                cell(`Total: ${totalItensGeral}`, { bold: true }),
+                cell(`Disponíveis: ${totalItensGeral - totalIndisponiveis}`, { bold: true }),
+                cell(`Indisponíveis: ${totalIndisponiveis}`, { bold: true }),
+                cell(''), cell(''), cell(''), cell('')
             ]);
             
             // LINHA EM BRANCO
-            rows.push([cell(''), cell(''), cell(''), cell(''), cell(''), cell(''), cell('')]);
+            rows.push([cell(''), cell(''), cell(''), cell(''), cell(''), cell(''), cell(''), cell('')]);
             
             // OBSERVAÇÕES
             rows.push([
                 cell('OBSERVAÇÕES GERAIS:', { bold: true, align: 'left' }),
-                cell(''), cell(''), cell(''), cell(''), cell(''), cell('')
+                cell(''), cell(''), cell(''), cell(''), cell(''), cell(''), cell('')
             ]);
             
             rows.push([
                 cell(inputs.obs, { align: 'left', wrap: true }),
-                cell(''), cell(''), cell(''), cell(''), cell(''), cell('')
+                cell(''), cell(''), cell(''), cell(''), cell(''), cell(''), cell('')
             ]);
             
             // LINHA EM BRANCO
-            rows.push([cell(''), cell(''), cell(''), cell(''), cell(''), cell(''), cell('')]);
+            rows.push([cell(''), cell(''), cell(''), cell(''), cell(''), cell(''), cell(''), cell('')]);
             
             // DATA/HORA DO RELATÓRIO
             const now = new Date();
@@ -1072,7 +1191,7 @@ document.getElementById('carrefour-logo').addEventListener('click', function() {
             
             rows.push([
                 cell(`Relatório gerado em: ${dataHora}`),
-                cell(''), cell(''), cell(''), cell(''), cell(''), cell('')
+                cell(''), cell(''), cell(''), cell(''), cell(''), cell(''), cell('')
             ]);
             
             // CONVERTER PARA WORKSHEET
@@ -1090,26 +1209,27 @@ document.getElementById('carrefour-logo').addEventListener('click', function() {
             
             // MESCLAR CÉLULAS
             ws['!merges'] = [
-                { s: { r: 0, c: 0 }, e: { r: 0, c: 6 } }, // Título principal
-                { s: { r: 2, c: 0 }, e: { r: 2, c: 6 } }, // INFORMAÇÕES DA UNIDADE
+                { s: { r: 0, c: 0 }, e: { r: 0, c: 7 } }, // Título principal
+                { s: { r: 2, c: 0 }, e: { r: 2, c: 7 } }, // INFORMAÇÕES DA UNIDADE
             ];
             
             // LARGURAS DAS COLUNAS
             ws['!cols'] = [
-                { wch: 20 }, // Categoria
-                { wch: 18 }, // Modelo
+                { wch: 15 }, // Categoria
+                { wch: 15 }, // Modelo
                 { wch: 15 }, // Código SAP
-                { wch: 10 }, // Quantidade
-                { wch: 15 }, // Status
-                { wch: 12 }, // Situação
-                { wch: 20 }  // Obs
+                { wch: 10 }, // RJ1401
+                { wch: 10 }, // SP1200
+                { wch: 10 }, // SP1500
+                { wch: 10 }, // Total
+                { wch: 15 }  // Status
             ];
             
             // ADICIONAR AO WORKBOOK
-            XLSX.utils.book_append_sheet(wb, ws, 'Mix Brastemp');
+            XLSX.utils.book_append_sheet(wb, ws, 'Mix 3 CDs');
             
             // Nome do arquivo
-            const fileName = `Mix_Brastemp_${inputs.rede.replace(/\s+/g, '_')}_${inputs.data.replace(/\//g, '-')}.xlsx`;
+            const fileName = `Mix_3CDs_${inputs.rede.replace(/\s+/g, '_')}_${inputs.data.replace(/\//g, '-')}.xlsx`;
             
             // GERAR E BAIXAR
             try {
@@ -1142,7 +1262,7 @@ document.getElementById('carrefour-logo').addEventListener('click', function() {
             // Título
             doc.setFontSize(16);
             doc.setTextColor(238, 46, 49);
-            doc.text('RELATÓRIO DE MIX - BRASTEMP/CONSUL', 15, 15);
+            doc.text('RELATÓRIO DE MIX - 3 CDs (RJ1401, SP1200, SP1500)', 15, 15);
             
             // Linha separadora
             doc.setDrawColor(238, 46, 49);
@@ -1168,17 +1288,25 @@ document.getElementById('carrefour-logo').addEventListener('click', function() {
                 
                 itens.forEach(item => {
                     const codigo = getProductCode(item.category, item.product);
-                    tableData.push([cat, item.product, codigo, item.quantity]);
+                    const cd = item.cd || {};
+                    tableData.push([
+                        cat, 
+                        item.product, 
+                        codigo, 
+                        cd.rj1401 || 0,
+                        cd.sp1200 || 0,
+                        cd.sp1500 || 0
+                    ]);
                 });
             });
             
             // Adicionar indisponíveis
             const indisponiveis = Object.values(selectedProducts).filter(p => p.indisponivel);
             if (indisponiveis.length > 0) {
-                tableData.push(['INDISPONÍVEIS', '', '', '']);
+                tableData.push(['INDISPONÍVEIS', '', '', '', '', '']);
                 indisponiveis.forEach(item => {
                     const codigo = getProductCode(item.category, item.product);
-                    tableData.push([item.category, item.product, codigo, 'IND']);
+                    tableData.push([item.category, item.product, codigo, 'IND', 'IND', 'IND']);
                 });
             }
             
@@ -1186,31 +1314,47 @@ document.getElementById('carrefour-logo').addEventListener('click', function() {
             if (tableData.length > 0) {
                 doc.autoTable({
                     startY: 60,
-                    head: [['Categoria', 'Modelo', 'Código SAP', 'Qtd']],
+                    head: [['Categoria', 'Modelo', 'Código', 'RJ1401', 'SP1200', 'SP1500']],
                     body: tableData,
                     theme: 'striped',
                     headStyles: { fillColor: [238, 46, 49], textColor: 255 },
                     styles: { fontSize: 8 },
                     columnStyles: {
-                        0: { cellWidth: 40 },
-                        1: { cellWidth: 35 },
-                        2: { cellWidth: 30 },
-                        3: { cellWidth: 15 }
+                        0: { cellWidth: 35 },
+                        1: { cellWidth: 30 },
+                        2: { cellWidth: 25 },
+                        3: { cellWidth: 20 },
+                        4: { cellWidth: 20 },
+                        5: { cellWidth: 20 }
                     }
                 });
             }
             
-            // Adicionar observações
+            // Adicionar totais
+            let totalRJ = 0, totalSP1200 = 0, totalSP1500 = 0;
+            Object.values(selectedProducts).forEach(item => {
+                if (!item.indisponivel) {
+                    const cd = item.cd || {};
+                    totalRJ += cd.rj1401 || 0;
+                    totalSP1200 += cd.sp1200 || 0;
+                    totalSP1500 += cd.sp1500 || 0;
+                }
+            });
+            
             const finalY = doc.lastAutoTable ? doc.lastAutoTable.finalY + 10 : 70;
             doc.setFontSize(10);
             doc.setTextColor(0, 0, 0);
-            doc.text('Observações:', 15, finalY);
+            doc.text(`Totais: RJ1401: ${totalRJ} | SP1200: ${totalSP1200} | SP1500: ${totalSP1500} | TOTAL: ${totalRJ + totalSP1200 + totalSP1500}`, 15, finalY);
+            
+            // Adicionar observações
+            doc.setFontSize(10);
+            doc.text('Observações:', 15, finalY + 10);
             doc.setFontSize(8);
             const splitObs = doc.splitTextToSize(observacao, 180);
-            doc.text(splitObs, 15, finalY + 5);
+            doc.text(splitObs, 15, finalY + 15);
             
             // Nome do arquivo
-            const fileName = `Mix_Brastemp_${inputs.rede || 'Loja'}.pdf`;
+            const fileName = `Mix_3CDs_${inputs.rede || 'Loja'}.pdf`;
             
             // Salvar PDF
             try {
@@ -1232,39 +1376,29 @@ document.getElementById('carrefour-logo').addEventListener('click', function() {
         });
 
         // Controles do modal de quantidade
-        document.getElementById('increase-qty').addEventListener('click', () => {
-            const input = document.getElementById('product-quantity');
-            input.value = Math.min(999, parseInt(input.value) + 1);
-        });
-
-        document.getElementById('decrease-qty').addEventListener('click', () => {
-            const input = document.getElementById('product-quantity');
-            input.value = Math.max(0, parseInt(input.value) - 1);
-        });
-
         document.getElementById('set-indisponivel').addEventListener('click', setIndisponivel);
 
         document.getElementById('confirm-quantity').addEventListener('click', () => {
-            const quantity = parseInt(document.getElementById('product-quantity').value);
+            const rj = parseInt(document.getElementById('cd-rj1401').value) || 0;
+            const sp12 = parseInt(document.getElementById('cd-sp1200').value) || 0;
+            const sp15 = parseInt(document.getElementById('cd-sp1500').value) || 0;
             
             if (currentProduct && currentCategory && currentButton) {
                 const productId = `${currentCategory}-${currentProduct}`;
                 
-                if (quantity > 0) {
+                if (rj + sp12 + sp15 > 0) {
                     selectedProducts[productId] = {
                         product: currentProduct,
                         category: currentCategory,
-                        quantity: quantity,
+                        cd: { rj1401: rj, sp1200: sp12, sp1500: sp15 },
                         indisponivel: false,
                         codigo: currentButton.dataset.codigo
                     };
-                    updateButtonVisual(currentButton, currentCategory, currentProduct, quantity, false);
                 } else {
-                    // Se quantity = 0, remover
                     delete selectedProducts[productId];
-                    updateButtonVisual(currentButton, currentCategory, currentProduct, 0, false);
                 }
                 
+                updateButtonVisual(currentButton, productId);
                 saveState();
             }
             
@@ -1281,23 +1415,13 @@ document.getElementById('carrefour-logo').addEventListener('click', function() {
         });
 
         // Controles do modal de edição
-        document.getElementById('edit-increase-qty').addEventListener('click', () => {
-            const input = document.getElementById('edit-product-quantity');
-            input.value = Math.min(999, parseInt(input.value) + 1);
-        });
-
-        document.getElementById('edit-decrease-qty').addEventListener('click', () => {
-            const input = document.getElementById('edit-product-quantity');
-            input.value = Math.max(0, parseInt(input.value) - 1);
-        });
-
         document.getElementById('edit-set-indisponivel').addEventListener('click', () => {
             if (editingProductId && selectedProducts[editingProductId]) {
                 const product = selectedProducts[editingProductId];
                 
                 selectedProducts[editingProductId] = {
                     ...product,
-                    quantity: 0,
+                    cd: { rj1401: 0, sp1200: 0, sp1500: 0 },
                     indisponivel: true
                 };
                 
@@ -1320,13 +1444,15 @@ document.getElementById('carrefour-logo').addEventListener('click', function() {
 
         document.getElementById('confirm-edit').addEventListener('click', () => {
             if (editingProductId && selectedProducts[editingProductId]) {
-                const newQuantity = parseInt(document.getElementById('edit-product-quantity').value);
+                const rj = parseInt(document.getElementById('edit-cd-rj1401').value) || 0;
+                const sp12 = parseInt(document.getElementById('edit-cd-sp1200').value) || 0;
+                const sp15 = parseInt(document.getElementById('edit-cd-sp1500').value) || 0;
                 const product = selectedProducts[editingProductId];
                 
-                if (newQuantity > 0) {
+                if (rj + sp12 + sp15 > 0) {
                     selectedProducts[editingProductId] = {
                         ...product,
-                        quantity: newQuantity,
+                        cd: { rj1401: rj, sp1200: sp12, sp1500: sp15 },
                         indisponivel: false
                     };
                 } else {
@@ -1382,7 +1508,6 @@ document.getElementById('carrefour-logo').addEventListener('click', function() {
             const category = document.getElementById('new-product-category').value;
             const productCode = document.getElementById('new-product-code').value.trim().toUpperCase();
             const productSAP = document.getElementById('new-product-sap').value.trim() || "SEM CADASTRO";
-            const quantity = parseInt(document.getElementById('new-product-qty').value) || 1;
             
             if (productCode === '') {
                 alert('Digite o código do produto');
@@ -1403,7 +1528,7 @@ document.getElementById('carrefour-logo').addEventListener('click', function() {
             selectedProducts[productId] = {
                 product: productCode,
                 category: category,
-                quantity: quantity,
+                cd: { rj1401: 0, sp1200: 0, sp1500: 0 },
                 indisponivel: false,
                 codigo: productSAP
             };
@@ -1416,7 +1541,6 @@ document.getElementById('carrefour-logo').addEventListener('click', function() {
             // Limpar e fechar modal
             document.getElementById('new-product-code').value = '';
             document.getElementById('new-product-sap').value = '';
-            document.getElementById('new-product-qty').value = '1';
             document.getElementById('add-product-modal').classList.add('hidden');
             
             showToast('Produto adicionado com sucesso!');
@@ -1484,4 +1608,4 @@ document.getElementById('carrefour-logo').addEventListener('click', function() {
         });
     </script>
 </body>
-</html>
+    </html>
