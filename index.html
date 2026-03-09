@@ -11,6 +11,8 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
     <style>
         body { font-family: 'Roboto', sans-serif; -webkit-tap-highlight-color: transparent; }
@@ -162,6 +164,29 @@
             transform: scale(1.1);
         }
         .add-product-btn:active {
+            transform: scale(0.95);
+        }
+        .load-firebase-btn {
+            position: fixed;
+            bottom: 156px;
+            right: 20px;
+            background-color: #3b82f6;
+            color: white;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 10px rgba(59, 130, 246, 0.5);
+            cursor: pointer;
+            z-index: 45;
+            transition: transform 0.2s;
+        }
+        .load-firebase-btn:hover {
+            transform: scale(1.1);
+        }
+        .load-firebase-btn:active {
             transform: scale(0.95);
         }
         .toast-notification {
@@ -338,6 +363,11 @@
         </div>
     </header>
 
+    <!-- Botão flutuante para carregar do Firebase -->
+    <div id="load-firebase-float" class="load-firebase-btn" title="Carregar última planilha do Firebase">
+        <i class="fas fa-cloud-download-alt text-xl"></i>
+    </div>
+
     <!-- Botão flutuante para adicionar produto -->
     <div id="add-product-float" class="add-product-btn">
         <i class="fas fa-plus text-2xl"></i>
@@ -427,6 +457,76 @@
         // Verificar se existe interface Android
         const isAndroid = typeof Android !== 'undefined';
         
+        // Configuração do Firebase
+        const firebaseConfig = {
+          apiKey: "AIzaSyBdNPXscs1-ikMOLGCzL5igJDi989RRCCQ",
+          authDomain: "checklist-94b12.firebaseapp.com",
+          databaseURL: "https://checklist-94b12-default-rtdb.firebaseio.com",
+          projectId: "checklist-94b12",
+          storageBucket: "checklist-94b12.firebasestorage.app",
+          messagingSenderId: "471194751883",
+          appId: "1:471194751883:web:b3ea0cad2212d5e0c6d58e",
+          measurementId: "G-KJBZ2F3ZZE"
+        };
+        
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+
+        function saveToFirebase() {
+            const inputs = {
+                rede: document.getElementById('rede').value,
+                id: document.getElementById('id-rede').value,
+                filial: document.getElementById('filial').value,
+                data: document.getElementById('data').value,
+                visitante: document.getElementById('visitante').value,
+                observacao: document.getElementById('observacao').value
+            };
+            
+            const stateToSave = {
+                inputs: inputs,
+                selectedProducts: selectedProducts,
+                customProducts: customProducts,
+                timestamp: new Date().toISOString()
+            };
+            
+            database.ref('lastState').set(stateToSave)
+                .catch(error => console.error("Erro ao salvar no Firebase:", error));
+        }
+
+        function loadFromFirebase() {
+            database.ref('lastState').once('value').then((snapshot) => {
+                const data = snapshot.val();
+                if (data) {
+                    if (data.inputs) {
+                        if (data.inputs.rede !== undefined) document.getElementById('rede').value = data.inputs.rede;
+                        if (data.inputs.id !== undefined) document.getElementById('id-rede').value = data.inputs.id;
+                        if (data.inputs.filial !== undefined) document.getElementById('filial').value = data.inputs.filial;
+                        if (data.inputs.data !== undefined) document.getElementById('data').value = data.inputs.data;
+                        if (data.inputs.visitante !== undefined) document.getElementById('visitante').value = data.inputs.visitante;
+                        if (data.inputs.observacao !== undefined) document.getElementById('observacao').value = data.inputs.observacao;
+                    }
+                    if (data.selectedProducts) {
+                        selectedProducts = data.selectedProducts;
+                        localStorage.setItem('selectedProducts', JSON.stringify(selectedProducts));
+                    } else {
+                        selectedProducts = {};
+                        localStorage.removeItem('selectedProducts');
+                    }
+                    if (data.customProducts) {
+                        customProducts = data.customProducts;
+                        localStorage.setItem('customProducts', JSON.stringify(customProducts));
+                    }
+                    renderCatalog();
+                    showToast('Planilha carregada do Firebase com sucesso!');
+                } else {
+                    showToast('Nenhum dado encontrado no Firebase.');
+                }
+            }).catch((error) => {
+                console.error("Erro ao carregar do Firebase:", error);
+                showToast('Erro ao carregar do Firebase');
+            });
+        }
+
         // Data atual automática
         const today = new Date();
         
@@ -832,6 +932,7 @@
         // Salvar estado no localStorage
         function saveState() {
             localStorage.setItem('selectedProducts', JSON.stringify(selectedProducts));
+            if (typeof saveToFirebase === 'function') saveToFirebase();
         }
 
         // Carregar estado do localStorage
@@ -1373,6 +1474,20 @@
         document.addEventListener('DOMContentLoaded', () => {
             loadState();
             renderCatalog();
+
+            // Setup input listeners to save to Firebase automatically
+            const formInputs = ['rede', 'id-rede', 'filial', 'data', 'visitante', 'observacao'];
+            formInputs.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) {
+                    el.addEventListener('input', () => {
+                        if (typeof saveToFirebase === 'function') saveToFirebase();
+                    });
+                }
+            });
+            
+            // Add Firebase load button listener
+            document.getElementById('load-firebase-float').addEventListener('click', loadFromFirebase);
         });
 
         // Controles do modal de quantidade
@@ -1488,6 +1603,7 @@
                 document.getElementById('observacao').value = '';
                 window.scrollTo(0,0);
                 showToast('Todos os dados foram limpos');
+                if (typeof saveToFirebase === 'function') saveToFirebase();
             }
         });
 
