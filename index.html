@@ -12,6 +12,7 @@
     <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
     <style>
@@ -166,6 +167,50 @@
         .add-product-btn:active {
             transform: scale(0.95);
         }
+        
+        /* Auth Overlay Styles */
+        #auth-overlay {
+            position: fixed;
+            inset: 0;
+            background-color: #f3f4f6;
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .auth-card {
+            background: white;
+            border-radius: 1.5rem;
+            padding: 2.5rem 1.5rem;
+            width: 90%;
+            max-width: 400px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+        .google-btn {
+            background-color: white;
+            color: #374151;
+            border: 2px solid #e5e7eb;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            width: 100%;
+            padding: 12px;
+            border-radius: 1rem;
+            margin-top: 20px;
+            transition: all 0.2s;
+        }
+        .google-btn:hover {
+            background-color: #f9fafb;
+            border-color: #d1d5db;
+        }
+        .google-btn img {
+            width: 24px;
+            height: 24px;
+        }
+
         .load-firebase-btn {
             position: fixed;
             bottom: 156px;
@@ -208,6 +253,22 @@
 </head>
 <body class="bg-gray-100 pb-24">
   
+    <!-- Auth Overlay -->
+    <div id="auth-overlay">
+        <div class="auth-card">
+            <div class="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i class="fas fa-clipboard-check text-4xl text-[#EE2E31]"></i>
+            </div>
+            <h2 class="text-2xl font-bold text-gray-800 mb-2">Mix Brastemp</h2>
+            <p class="text-gray-500 text-sm mb-6">Faça login para salvar suas planilhas e acessar o histórico em qualquer dispositivo.</p>
+            
+            <button id="google-login-btn" class="google-btn shadow-sm">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg" alt="Google">
+                Entrar com o Google
+            </button>
+        </div>
+    </div>
+
   <!-- Logo Carrefour -->
 <div class="fixed top-16 right-4 z-50 cursor-pointer" id="carrefour-logo">
     <img src="./carrefour.png" 
@@ -442,11 +503,45 @@
         </div>
     </div>
 
+    <!-- Modal de Opções de Load do Firebase -->
+    <div id="load-options-modal" class="fixed inset-0 bg-black bg-opacity-60 z-[90] hidden flex items-center justify-center backdrop-blur-sm">
+        <div class="bg-white w-full max-w-sm rounded-2xl shadow-2xl p-6">
+            <h3 class="text-xl font-bold text-gray-800 mb-2 flex items-center">
+                <i class="fas fa-cloud-download-alt text-[#3b82f6] mr-2"></i> Opções de Carregamento
+            </h3>
+            <p class="text-sm text-gray-500 mb-6">De onde você deseja carregar os dados?</p>
+            
+            <div class="space-y-4 mb-6">
+                <button id="load-my-data" class="w-full bg-blue-50 hover:bg-blue-100 border-2 border-blue-200 text-blue-800 font-bold py-4 px-4 rounded-xl transition flex flex-col items-center justify-center gap-1 group">
+                    <span class="flex items-center gap-2 text-lg">
+                        <i class="fas fa-user-circle"></i> Meus Dados
+                    </span>
+                    <span class="text-xs font-normal opacity-80 group-hover:opacity-100 transition-opacity">Carrega o seu último preenchimento</span>
+                </button>
+                
+                <button id="load-global-data" class="w-full bg-gray-50 hover:bg-gray-100 border-2 border-gray-200 text-gray-800 font-bold py-4 px-4 rounded-xl transition flex flex-col items-center justify-center gap-1 group">
+                    <span class="flex items-center gap-2 text-lg">
+                        <i class="fas fa-globe"></i> Dados Globais
+                    </span>
+                    <span class="text-xs font-normal opacity-80 group-hover:opacity-100 transition-opacity">Carrega a última planilha enviada por alguém</span>
+                </button>
+            </div>
+            
+            <button id="cancel-load-options" class="w-full py-3 text-gray-500 font-bold rounded-xl hover:bg-gray-100 transition">Cancelar</button>
+        </div>
+    </div>
+
     <!-- Botão Flutuante Inferior -->
     <div class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] z-40">
-        <div class="max-w-md mx-auto">
-            <button id="generate-report" class="w-full bg-[#EE2E31] text-white font-bold py-3 rounded-xl shadow-lg hover:bg-red-700 active:scale-95 transition flex items-center justify-center gap-2">
-                <i class="fas fa-check-circle mr-2"></i> Visualizar Relatório (3 CDs)
+        <div class="max-w-md mx-auto flex gap-2">
+            <div class="flex items-center justify-center px-4 bg-gray-100 rounded-xl text-xs font-bold text-gray-500 whitespace-nowrap overflow-hidden text-ellipsis max-w-[120px]" id="user-display-name">
+                Offline
+            </div>
+            <button id="generate-report" class="flex-1 bg-[#EE2E31] text-white font-bold py-3 rounded-xl shadow-lg hover:bg-red-700 active:scale-95 transition flex items-center justify-center gap-2">
+                <i class="fas fa-check-circle mr-2"></i> Relatório (3 CDs)
+            </button>
+            <button id="logout-btn" class="w-12 bg-gray-200 text-gray-700 font-bold py-3 rounded-xl shadow-lg hover:bg-gray-300 active:scale-95 transition flex items-center justify-center" title="Sair">
+                <i class="fas fa-sign-out-alt"></i>
             </button>
         </div>
     </div>
@@ -471,8 +566,46 @@
         
         firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
+        const auth = firebase.auth();
+        const provider = new firebase.auth.GoogleAuthProvider();
+
+        let currentUser = null;
+
+        // Listener de Autenticação
+        auth.onAuthStateChanged((user) => {
+            if (user) {
+                currentUser = user;
+                document.getElementById('auth-overlay').style.display = 'none';
+                document.getElementById('user-display-name').textContent = user.displayName?.split(' ')[0] || "Usuário";
+                document.getElementById('user-display-name').title = user.email;
+                showToast(`Bem-vindo(a), ${user.displayName?.split(' ')[0]}!`);
+            } else {
+                currentUser = null;
+                document.getElementById('auth-overlay').style.display = 'flex';
+                document.getElementById('user-display-name').textContent = "Offline";
+            }
+        });
+
+        // Trigger Google Login
+        document.getElementById('google-login-btn')?.addEventListener('click', () => {
+            auth.signInWithPopup(provider).catch((error) => {
+                console.error("Erro no login:", error);
+                alert("Erro ao fazer login: " + error.message);
+            });
+        });
+
+        // Trigger Logout
+        document.getElementById('logout-btn')?.addEventListener('click', () => {
+            if (confirm("Deseja realmente sair?")) {
+                auth.signOut().then(() => {
+                    // O onAuthStateChanged cuidará da UI
+                });
+            }
+        });
 
         function saveToFirebase() {
+            if (!currentUser) return; // Não salva offline
+            
             const inputs = {
                 rede: document.getElementById('rede').value,
                 id: document.getElementById('id-rede').value,
@@ -486,15 +619,26 @@
                 inputs: inputs,
                 selectedProducts: selectedProducts,
                 customProducts: customProducts,
-                timestamp: new Date().toISOString()
+                timestamp: new Date().toISOString(),
+                savedByUid: currentUser.uid,
+                savedByName: currentUser.displayName,
+                savedByEmail: currentUser.email
             };
             
-            database.ref('lastState').set(stateToSave)
-                .catch(error => console.error("Erro ao salvar no Firebase:", error));
+            // Salva na raiz do usuário (histórico pessoal)
+            database.ref(`users/${currentUser.uid}/lastState`).set(stateToSave)
+                .catch(error => console.error("Erro ao salvar no perfil Firebase:", error));
+                
+            // Salva na raiz global (histórico da frota/time)
+            database.ref('global/lastState').set(stateToSave)
+                .catch(error => console.error("Erro ao salvar no global Firebase:", error));
         }
 
-        function loadFromFirebase() {
-            database.ref('lastState').once('value').then((snapshot) => {
+        function loadFromFirebasePath(pathPath) {
+            if (!currentUser) return;
+            showToast('Lendo do banco de dados...');
+            
+            database.ref(pathPath).once('value').then((snapshot) => {
                 const data = snapshot.val();
                 if (data) {
                     if (data.inputs) {
@@ -517,14 +661,28 @@
                         localStorage.setItem('customProducts', JSON.stringify(customProducts));
                     }
                     renderCatalog();
-                    showToast('Planilha carregada do Firebase com sucesso!');
+                    
+                    const timeString = new Date(data.timestamp).toLocaleString('pt-BR');
+                    const userName = data.savedByName ? data.savedByName.split(' ')[0] : 'Alguém';
+                    showToast(`Planilha de ${userName} carregada (${timeString})`);
                 } else {
-                    showToast('Nenhum dado encontrado no Firebase.');
+                    showToast('Nenhum dado encontrado nesse local.');
                 }
             }).catch((error) => {
                 console.error("Erro ao carregar do Firebase:", error);
-                showToast('Erro ao carregar do Firebase');
+                showToast('Erro de conexão ao carregar.');
             });
+        }
+
+        // Abre modal de opções
+        function openLoadOptions() {
+            if (!currentUser) return alert("Faça login primeiro!");
+            document.getElementById('load-options-modal').classList.remove('hidden');
+        }
+
+        // Fecha modal de opções
+        function closeLoadOptions() {
+            document.getElementById('load-options-modal').classList.add('hidden');
         }
 
         // Data atual automática
@@ -1486,9 +1644,22 @@
                 }
             });
             
-            // Add Firebase load button listener
-            document.getElementById('load-firebase-float').addEventListener('click', loadFromFirebase);
+            // Add Firebase load button listener to open modal
+            document.getElementById('load-firebase-float').addEventListener('click', openLoadOptions);
         });
+
+        // Controles do Load Options Modal
+        document.getElementById('load-my-data').addEventListener('click', () => {
+            closeLoadOptions();
+            loadFromFirebasePath(`users/${currentUser.uid}/lastState`);
+        });
+
+        document.getElementById('load-global-data').addEventListener('click', () => {
+            closeLoadOptions();
+            loadFromFirebasePath(`global/lastState`);
+        });
+
+        document.getElementById('cancel-load-options').addEventListener('click', closeLoadOptions);
 
         // Controles do modal de quantidade
         document.getElementById('set-indisponivel').addEventListener('click', setIndisponivel);
@@ -1708,6 +1879,13 @@
             }
         });
 
+        // Fechar modal de opções de load ao clicar fora
+        document.getElementById('load-options-modal').addEventListener('click', (e) => {
+            if (e.target === document.getElementById('load-options-modal')) {
+                closeLoadOptions();
+            }
+        });
+
         // Tecla ESC para fechar modais
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape') {
@@ -1715,6 +1893,7 @@
                 document.getElementById('add-product-modal').classList.add('hidden');
                 document.getElementById('edit-quantity-modal').classList.add('hidden');
                 document.getElementById('result-modal').classList.add('hidden');
+                closeLoadOptions();
             }
         });
 
