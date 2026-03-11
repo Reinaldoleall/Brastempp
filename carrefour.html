@@ -1635,22 +1635,23 @@ const baseCatalog = {
             }
         });
 
-        // Reset all
-        document.getElementById('reset-all').addEventListener('click', () => {
-            if(confirm('Limpar todas as seleções?')) {
-                selectedProducts = {};
-                localStorage.removeItem('selectedProducts');
-                renderCatalog();
-                document.getElementById('rede').value = '';
-                document.getElementById('id-rede').value = '';
-                document.getElementById('filial').value = '';
-                document.getElementById('visitante').value = '';
-                document.getElementById('observacao').value = '';
-                window.scrollTo(0,0);
-                showToast('Todos os dados foram limpos');
-                if (typeof saveToFirebase === 'function') saveToFirebase();
-            }
-        });
+document.getElementById('reset-all').addEventListener('click', () => {
+    if(confirm('Limpar todas as seleções?')) {
+        selectedProducts = {};
+        localStorage.removeItem('selectedProducts');
+        renderCatalog();
+        document.getElementById('rede').value = '';
+        document.getElementById('id-rede').value = '';
+        document.getElementById('filial').value = '';
+        document.getElementById('visitante').value = '';
+        document.getElementById('observacao').value = '';
+        window.scrollTo(0,0);
+        showToast('Todos os dados foram limpos da tela');
+        
+        // ❌ REMOVA OU COMENTE A LINHA ABAIXO:
+        // if (typeof saveToFirebase === 'function') saveToFirebase();
+    }
+});
 
         // Botões de exportação rápida no header
         document.getElementById('export-excel').addEventListener('click', generateStyledExcel);
@@ -1779,4 +1780,4 @@ const baseCatalog = {
         });
     </script>
 </body>
-                  </html>
+</html>
