@@ -253,7 +253,6 @@
 </head>
 <body class="bg-gray-100 pb-24">
   
-    <!-- Auth Overlay -->
     <div id="auth-overlay">
         <div class="auth-card">
             <div class="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -269,17 +268,14 @@
         </div>
     </div>
 
-  <!-- Logo Carrefour -->
-<div class="fixed top-16 right-4 z-50 cursor-pointer" id="carrefour-logo">
+  <div class="fixed top-16 right-4 z-50 cursor-pointer" id="carrefour-logo">
     <img src="./carrefour.png" 
          alt="Carrefour" 
          class="w-12 h-12 object-contain bg-white rounded-full shadow-lg p-1 hover:scale-110 transition-transform">
 </div>
 
-    <!-- Toast Notification -->
     <div id="toast" class="toast-notification hidden"></div>
 
-    <!-- Modal de Quantidade com 3 CDs -->
     <div id="quantity-modal" class="quantity-modal">
         <div class="quantity-card">
             <h3 class="text-lg font-bold text-gray-800 mb-1" id="modal-product-name">Produto</h3>
@@ -288,7 +284,6 @@
             <p class="text-xs text-gray-500 uppercase tracking-wider">Código SAP</p>
             <p id="modal-product-code" class="text-lg font-bold text-[#EE2E31] mb-3"></p>
             
-            <!-- Campos para os 3 CDs -->
             <div class="mb-4">
                 <p class="text-sm font-medium text-gray-700 mb-2">Quantidade por CD:</p>
                 <div class="grid grid-cols-3 gap-2">
@@ -320,7 +315,6 @@
         </div>
     </div>
 
-    <!-- Modal de Adicionar Produto -->
     <div id="add-product-modal" class="fixed inset-0 bg-black bg-opacity-60 z-[70] hidden flex items-center justify-center backdrop-blur-sm">
         <div class="bg-white w-full max-w-sm rounded-2xl shadow-2xl p-5">
             <h3 class="text-lg font-bold text-gray-800 mb-4 flex items-center">
@@ -359,7 +353,6 @@
         </div>
     </div>
 
-    <!-- Modal de Edição com 3 CDs -->
     <div id="edit-quantity-modal" class="fixed inset-0 bg-black bg-opacity-60 z-[80] hidden flex items-center justify-center backdrop-blur-sm">
         <div class="bg-white w-full max-w-sm rounded-2xl shadow-2xl p-5">
             <h3 class="text-lg font-bold text-gray-800 mb-4 flex items-center">
@@ -405,7 +398,6 @@
         </div>
     </div>
 
-    <!-- Header -->
     <header class="bg-[#EE2E31] text-white p-4 sticky top-0 z-50 shadow-md flex justify-between items-center">
         <div class="flex items-center gap-2">
             <i class="fas fa-clipboard-check"></i>
@@ -424,19 +416,16 @@
         </div>
     </header>
 
-    <!-- Botão flutuante para carregar do Firebase -->
     <div id="load-firebase-float" class="load-firebase-btn" title="Carregar última planilha do Firebase">
         <i class="fas fa-cloud-download-alt text-xl"></i>
     </div>
 
-    <!-- Botão flutuante para adicionar produto -->
     <div id="add-product-float" class="add-product-btn">
         <i class="fas fa-plus text-2xl"></i>
     </div>
 
     <div class="container mx-auto p-4 max-w-md">
         
-        <!-- Info da Loja -->
         <div class="bg-white p-4 rounded-2xl shadow-sm mb-4">
             <h3 class="text-gray-400 text-xs font-bold uppercase tracking-wider mb-3 flex items-center">
                 <i class="fas fa-store mr-2"></i> Dados da Visita
@@ -465,15 +454,12 @@
             <h2 class="text-gray-800 text-sm">Toque nos produtos para lançar quantidades nos CDs (RJ1401, SP1200, SP1500). Toque duas vezes para editar. O badge mostra a soma total.</h2>
         </div>
 
-        <!-- Container de Produtos -->
         <div id="products-container" class="space-y-4">
-            <!-- As categorias serão injetadas aqui -->
-        </div>
+            </div>
         
         <div class="h-8"></div>
     </div>
 
-    <!-- Modal de Resultado -->
     <div id="result-modal" class="fixed inset-0 bg-black bg-opacity-60 z-[60] hidden flex items-end sm:items-center justify-center backdrop-blur-sm">
         <div class="bg-white w-full max-w-md sm:rounded-2xl rounded-t-2xl shadow-2xl transform transition-transform duration-300 max-h-[90vh] flex flex-col">
             
@@ -503,7 +489,6 @@
         </div>
     </div>
 
-    <!-- Modal de Opções de Load do Firebase -->
     <div id="load-options-modal" class="fixed inset-0 bg-black bg-opacity-60 z-[90] hidden flex items-center justify-center backdrop-blur-sm">
         <div class="bg-white w-full max-w-sm rounded-2xl shadow-2xl p-6">
             <h3 class="text-xl font-bold text-gray-800 mb-2 flex items-center">
@@ -531,7 +516,6 @@
         </div>
     </div>
 
-    <!-- Botão Flutuante Inferior -->
     <div class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] z-40">
         <div class="max-w-md mx-auto flex gap-2">
             <div class="flex items-center justify-center px-4 bg-gray-100 rounded-xl text-xs font-bold text-gray-500 whitespace-nowrap overflow-hidden text-ellipsis max-w-[120px]" id="user-display-name">
@@ -615,6 +599,14 @@
                 observacao: document.getElementById('observacao').value
             };
             
+            // TRAVA DE SEGURANÇA: Verifica se tem produtos na lista
+            const temProdutos = Object.keys(selectedProducts).length > 0;
+            
+            // Se o campo "Rede" estiver vazio E não tiver nenhum produto selecionado, ele ABORTA
+            if (!inputs.rede && !temProdutos) {
+                return; 
+            }
+            
             const stateToSave = {
                 inputs: inputs,
                 selectedProducts: selectedProducts,
@@ -632,6 +624,37 @@
             // Salva na raiz global (histórico da frota/time)
             database.ref('global/lastState').set(stateToSave)
                 .catch(error => console.error("Erro ao salvar no global Firebase:", error));
+        }
+
+        // FUNÇÃO NOVA: Salva um histórico que nunca é apagado
+        function salvarHistoricoDefinitivo() {
+            if (!currentUser) return;
+            
+            const inputs = {
+                rede: document.getElementById('rede').value,
+                id: document.getElementById('id-rede').value,
+                filial: document.getElementById('filial').value,
+                data: document.getElementById('data').value,
+                visitante: document.getElementById('visitante').value,
+                observacao: document.getElementById('observacao').value
+            };
+            
+            // Só salva no histórico se tiver pelo menos a rede preenchida
+            if (!inputs.rede) return;
+            
+            const stateToSave = {
+                inputs: inputs,
+                selectedProducts: selectedProducts,
+                customProducts: customProducts,
+                timestamp: new Date().toISOString(),
+                savedByUid: currentUser.uid,
+                savedByName: currentUser.displayName,
+                savedByEmail: currentUser.email
+            };
+            
+            // O .push() cria um ID único novo para CADA vez que salva, criando um histórico imutável
+            database.ref(`users/${currentUser.uid}/historico`).push(stateToSave);
+            database.ref('global/historico').push(stateToSave);
         }
 
         function loadFromFirebasePath(pathPath) {
@@ -697,7 +720,6 @@
         // Lista de Produtos Base com CÓDIGOS (COMPLETA)
         const baseCatalog = {
             Geladeiras: [
-                // BRASTEMP
                 { modelo: "BRM55FB", codigo: "5309131" },
                 { modelo: "BRM55FK", codigo: "5309174" },
                 { modelo: "BRM55FE", codigo: "5309158" },
@@ -727,7 +749,6 @@
                 { modelo: "BRE66AE", codigo: "5369266" },
                 { modelo: "BRM52MB", codigo: "5369193" },
                 { modelo: "BRM52MK", codigo: "5369215" },
-                // CONSUL
                 { modelo: "CRD37AE", codigo: "907090" },
                 { modelo: "CRM39AB", codigo: "4614330" },
                 { modelo: "CRM39AK", codigo: "4608305" },
@@ -745,7 +766,6 @@
                 { modelo: "CRM40MB", codigo: "5358264" }
             ],
             Lavadora: [
-                // BRASTEMP
                 { modelo: "BWK13A9", codigo: "5287510" },
                 { modelo: "BWK13AB", codigo: "5287499" },
                 { modelo: "BWF15AB", codigo: "5296773" },
@@ -754,14 +774,12 @@
                 { modelo: "BWY16A9", codigo: "5341035" },
                 { modelo: "BWF14AB", codigo: "5361206" },
                 { modelo: "BWJ14A9", codigo: "5363829" },
-                // CONSUL
                 { modelo: "CWB09BB", codigo: "5185017" },
                 { modelo: "CWH12BB", codigo: "5212995" },
                 { modelo: "CWN15AB", codigo: "5313759" },
                 { modelo: "CWN13AB", codigo: "5332656" }
             ],
             Fogao: [
-                // BRASTEMP
                 { modelo: "BFO4VBR", codigo: "5193443" },
                 { modelo: "BFO4EBB", codigo: "5193435" },
                 { modelo: "BFO4NBB", codigo: "5153360" },
@@ -772,7 +790,6 @@
                 { modelo: "BFS5NDB", codigo: "5313040" },
                 { modelo: "BFS5XAR", codigo: "5313970" },
                 { modelo: "BFS5LAP", codigo: "5328411" },
-                // CONSUL
                 { modelo: "CFO4VBE", codigo: "5286336" },
                 { modelo: "CFO4NAB", codigo: "908576" },
                 { modelo: "CFO4NAR", codigo: "908584" },
@@ -786,7 +803,6 @@
                 { modelo: "CFS5VBE", codigo: "5334233" }
             ],
             Cooktop: [
-                // BRASTEMP
                 { modelo: "BDD86AP", codigo: "5328420" },
                 { modelo: "BDD75BE", codigo: "5364957" },
                 { modelo: "BDD61BE", codigo: "5364949" },
@@ -795,23 +811,19 @@
                 { modelo: "BDD75AE", codigo: "5364973" },
                 { modelo: "BDD75AE", codigo: "619108" },
                 { modelo: "BDD61AE", codigo: "619094" },
-                // CONSUL
                 { modelo: "CD075AE", codigo: "907022" },
                 { modelo: "CD060AE", codigo: "6343" },
                 { modelo: "CD075BE", codigo: "5364990" },
                 { modelo: "CDS75AE", codigo: "5365007" }
             ],
             MWO: [
-                // BRASTEMP
                 { modelo: "BMS46AB", codigo: "5056357" },
                 { modelo: "BMS46AR", codigo: "5056373" },
-                // CONSUL
                 { modelo: "CMS46AB", codigo: "5056411" },
                 { modelo: "CMS45AB", codigo: "4044290" },
                 { modelo: "CMO20BF", codigo: "SEM CADASTRO" }
             ],
             Freezer: [
-                // CONSUL
                 { modelo: "CVU18MB", codigo: "5369827" },
                 { modelo: "CVU20MB", codigo: "5369843" },
                 { modelo: "CVU26MB", codigo: "5369860" },
@@ -1089,8 +1101,8 @@
 
         // Salvar estado no localStorage
         function saveState() {
+            // AQUI NÃO SALVA MAIS AUTOMATICAMENTE NO FIREBASE
             localStorage.setItem('selectedProducts', JSON.stringify(selectedProducts));
-            if (typeof saveToFirebase === 'function') saveToFirebase();
         }
 
         // Carregar estado do localStorage
@@ -1633,13 +1645,13 @@
             loadState();
             renderCatalog();
 
-            // Setup input listeners to save to Firebase automatically
+            // Setup input listeners to save localmente apenas
             const formInputs = ['rede', 'id-rede', 'filial', 'data', 'visitante', 'observacao'];
             formInputs.forEach(id => {
                 const el = document.getElementById(id);
                 if (el) {
                     el.addEventListener('input', () => {
-                        if (typeof saveToFirebase === 'function') saveToFirebase();
+                        // AQUI NÃO SALVA MAIS NO FIREBASE ENQUANTO DIGITA
                     });
                 }
             });
@@ -1685,7 +1697,7 @@
                 }
                 
                 updateButtonVisual(currentButton, productId);
-                saveState();
+                saveState(); // Salva só localmente
             }
             
             closeQuantityModal();
@@ -1711,7 +1723,7 @@
                     indisponivel: true
                 };
                 
-                saveState();
+                saveState(); // Salva só localmente
                 renderCatalog();
                 closeEditModal();
                 showToast('Produto marcado como indisponível');
@@ -1721,7 +1733,7 @@
         document.getElementById('edit-remove-product').addEventListener('click', () => {
             if (editingProductId) {
                 delete selectedProducts[editingProductId];
-                saveState();
+                saveState(); // Salva só localmente
                 renderCatalog();
                 closeEditModal();
                 showToast('Produto removido da lista');
@@ -1745,7 +1757,7 @@
                     delete selectedProducts[editingProductId];
                 }
                 
-                saveState();
+                saveState(); // Salva só localmente
                 renderCatalog();
                 closeEditModal();
                 showToast('Produto atualizado com sucesso');
@@ -1761,23 +1773,21 @@
             }
         });
 
-document.getElementById('reset-all').addEventListener('click', () => {
-    if(confirm('Limpar todas as seleções?')) {
-        selectedProducts = {};
-        localStorage.removeItem('selectedProducts');
-        renderCatalog();
-        document.getElementById('rede').value = '';
-        document.getElementById('id-rede').value = '';
-        document.getElementById('filial').value = '';
-        document.getElementById('visitante').value = '';
-        document.getElementById('observacao').value = '';
-        window.scrollTo(0,0);
-        showToast('Todos os dados foram limpos da tela');
-        
-        // ❌ REMOVA OU COMENTE A LINHA ABAIXO:
-        // if (typeof saveToFirebase === 'function') saveToFirebase();
-    }
-});
+        document.getElementById('reset-all').addEventListener('click', () => {
+            if(confirm('Limpar todas as seleções?')) {
+                selectedProducts = {};
+                localStorage.removeItem('selectedProducts');
+                renderCatalog();
+                document.getElementById('rede').value = '';
+                document.getElementById('id-rede').value = '';
+                document.getElementById('filial').value = '';
+                document.getElementById('visitante').value = '';
+                document.getElementById('observacao').value = '';
+                window.scrollTo(0,0);
+                showToast('Todos os dados foram limpos da tela');
+                // NUNCA salva a tela vazia pro Firebase! Apenas apaga localmente.
+            }
+        });
 
         // Botões de exportação rápida no header
         document.getElementById('export-excel').addEventListener('click', generateStyledExcel);
@@ -1821,7 +1831,7 @@ document.getElementById('reset-all').addEventListener('click', () => {
                 codigo: productSAP
             };
             
-            saveState();
+            saveState(); // Salva só localmente
             
             // Re-renderizar
             renderCatalog();
@@ -1834,8 +1844,13 @@ document.getElementById('reset-all').addEventListener('click', () => {
             showToast('Produto adicionado com sucesso!');
         });
 
-        // Gerar relatório (abrir modal)
+        // Gerar relatório (abrir modal) e ENVIAR PARA O FIREBASE NESTE MOMENTO
         document.getElementById('generate-report').addEventListener('click', () => {
+            
+            // ✅ AQUI ACONTECE A MÁGICA: Manda para o Firebase a versão final validada
+            saveToFirebase();
+            salvarHistoricoDefinitivo();
+            
             const inputs = {
                 rede: document.getElementById('rede').value || "-",
                 id: document.getElementById('id-rede').value || "-",
@@ -1900,8 +1915,9 @@ document.getElementById('reset-all').addEventListener('click', () => {
 
         // Salvar estado automaticamente quando a página for fechada
         window.addEventListener('beforeunload', () => {
+            // Salva SOMENTE LOCALMENTE (não manda Firebase pra evitar apagar)
             saveState();
         });
     </script>
 </body>
-    </html>
+</html>
